@@ -4,8 +4,11 @@
 _start:
   mrs x1, mpidr_el1
   and x1, x1, #3
-  cbz x1, hyp_start
+  cbz x1, vmm_start
 
-hyp_start:
-  mrs x0, currentel
+vmm_start:
+  ldr x0, =_stack
+  add x0, x0, #4096
+  mov sp, x0
+  bl vmm_init
   b .

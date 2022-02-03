@@ -18,7 +18,7 @@ ifndef NCPU
 NCPU = 4
 endif
 
-OBJS = src/boot.o
+OBJS = src/boot.o src/init.o src/uart.o
 
 QEMUOPTS = -cpu $(QCPU) -machine $(MACHINE) -smp $(NCPU) -m 256
 QEMUOPTS += -global virtio-mmio.force-legacy=false
