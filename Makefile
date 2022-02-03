@@ -13,15 +13,15 @@ LDFLAGS = -nostdlib -nostartfiles
 QEMUPREFIX =
 QEMU = $(QEMUPREFIX)qemu-system-aarch64
 GIC_VERSION = 3
-MACHINE = virt,gic-version=$(GIC_VERSION)
+MACHINE = virt,gic-version=$(GIC_VERSION),virtualization=on
 ifndef NCPU
 NCPU = 4
 endif
 
+OBJS = src/boot.o
+
 QEMUOPTS = -cpu $(QCPU) -machine $(MACHINE) -smp $(NCPU) -m 256
 QEMUOPTS += -global virtio-mmio.force-legacy=false
-QEMUOPTS += -drive file=fs.img,if=none,format=raw,id=d0
-QEMUOPTS += -device virtio-blk-device,drive=d0,bus=virtio-mmio-bus.0
 QEMUOPTS += -nographic -kernel mvmm
 
 %.o: %.c
@@ -31,3 +31,17 @@ QEMUOPTS += -nographic -kernel mvmm
 	$(CC) $(CFLAGS) -c $< -o $@
 
 -include: *.d
+
+mvmm: $(OBJS) src/memory.ld
+	$(LD) $(LDFLAGS) -T src/memory.ld -o $@ $(OBJS)
+
+qemu: mvmm
+	$(QEMU) $(QEMUOPTS)
+
+gdb: mvmm
+	$(QEMU) -S -gdb tcp::1234 $(QEMUOPTS)
+
+clean:
+	$(RM) $(OBJS) mvmm
+
+.PHONY: qemu gdb clean
