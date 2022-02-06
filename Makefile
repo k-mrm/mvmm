@@ -15,10 +15,10 @@ QEMU = $(QEMUPREFIX)qemu-system-aarch64
 GIC_VERSION = 3
 MACHINE = virt,gic-version=$(GIC_VERSION),virtualization=on
 ifndef NCPU
-NCPU = 4
+NCPU = 1
 endif
 
-OBJS = src/boot.o src/init.o src/uart.o
+OBJS = src/boot.o src/init.o src/uart.o src/lib.o src/pmalloc.o
 
 QEMUOPTS = -cpu $(QCPU) -machine $(MACHINE) -smp $(NCPU) -m 256
 QEMUOPTS += -global virtio-mmio.force-legacy=false

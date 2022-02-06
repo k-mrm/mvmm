@@ -1,2 +1,2 @@
 # mvmm
-test hypervisor on aarch64
+test type-1 hypervisor on aarch64
