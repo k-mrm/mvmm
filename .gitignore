@@ -1,4 +1,6 @@
 *.o
 *.d
+*.elf
+*.img
 
 mvmm
