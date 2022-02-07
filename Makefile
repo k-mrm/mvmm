@@ -18,7 +18,7 @@ ifndef NCPU
 NCPU = 1
 endif
 
-OBJS = src/boot.o src/init.o src/uart.o src/lib.o src/pmalloc.o
+OBJS = src/boot.o src/init.o src/uart.o src/lib.o src/pmalloc.o src/printf.o
 
 QEMUOPTS = -cpu $(QCPU) -machine $(MACHINE) -smp $(NCPU) -m 256
 QEMUOPTS += -global virtio-mmio.force-legacy=false
@@ -30,10 +30,14 @@ QEMUOPTS += -nographic -kernel mvmm
 %.o: %.S
 	$(CC) $(CFLAGS) -c $< -o $@
 
+guest/hello.img: guest/Makefile
+	make -C guest
+
 -include: *.d
 
-mvmm: $(OBJS) src/memory.ld
-	$(LD) $(LDFLAGS) -T src/memory.ld -o $@ $(OBJS)
+mvmm: $(OBJS) src/memory.ld guest/hello.img
+	$(LD) -r -b binary guest/hello.img -o hello-img.o
+	$(LD) $(LDFLAGS) -T src/memory.ld -o $@ $(OBJS) hello-img.o
 
 qemu: mvmm
 	$(QEMU) $(QEMUOPTS)
@@ -42,6 +46,6 @@ gdb: mvmm
 	$(QEMU) -S -gdb tcp::1234 $(QEMUOPTS)
 
 clean:
-	$(RM) $(OBJS) mvmm
+	$(RM) $(OBJS) mvmm *.img
 
 .PHONY: qemu gdb clean
