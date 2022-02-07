@@ -1,7 +1,6 @@
 #include "types.h"
 #include "lib.h"
-
-#define PAGESIZE  4096
+#include "mm.h"
 
 struct header {
   struct header *next;

@@ -26,6 +26,8 @@ QEMUOPTS += -nographic -kernel $(TARGET)
 
 OBJS = hello.o boot.o
 
+all: hello.img
+
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -37,10 +39,13 @@ OBJS = hello.o boot.o
 $(TARGET): $(OBJS) memory.ld
 	$(LD) $(LDFLAGS) -T memory.ld -o $@ $(OBJS)
 
+hello.img: $(TARGET)
+	$(OBJCOPY) -O binary $^ $@
+
 qemu: $(TARGET)
 	$(QEMU) $(QEMUOPTS)
 
 clean:
-	$(RM) $(OBJS) $(TARGET)
+	$(RM) $(OBJS) $(TARGET) hello.img
 
-.PHONY: qemu clean
+.PHONY: qemu clean all

@@ -1,4 +1,4 @@
-OUTPUT_ARCH( "aarch64" )
+OUTPUT_ARCH("aarch64")
 ENTRY(_start)
 
 SECTIONS {
