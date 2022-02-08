@@ -30,9 +30,6 @@ SECTIONS {
     }
 
     . = ALIGN(4096);
-    PROVIDE(__vmm_alloc_start = .);
-    . += 0x20000;
-    PROVIDE(__vmm_alloc_end = .);
 
     PROVIDE(vmm_end = .);
 

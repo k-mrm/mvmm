@@ -1,5 +1,6 @@
 #include "types.h"
 #include "uart.h"
+#include "aarch64.h"
 
 static void printiu32(i32 num, int base, bool sign) {
   char buf[sizeof(num) * 8 + 1] = {0};
@@ -84,7 +85,17 @@ static int vprintf(const char *fmt) {
   return 0;
 }
 
-
 int printf(const char *fmt, ...) {
   return vprintf(fmt);
+}
+
+void panic(const char *fmt) {
+  printf("!!!vmm panic ");
+  vprintf(fmt);
+  printf("\n");
+
+  intr_disable();
+
+  for(;;)
+    asm volatile("wfi");
 }

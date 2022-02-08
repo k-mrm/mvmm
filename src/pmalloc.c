@@ -1,6 +1,7 @@
 #include "types.h"
 #include "lib.h"
 #include "mm.h"
+#include "memmap.h"
 
 struct header {
   struct header *next;
@@ -8,8 +9,7 @@ struct header {
 
 struct header *freelist;
 
-extern char __vmm_alloc_start[];
-extern char __vmm_alloc_end[];
+extern char vmm_end[];
 
 void *pmalloc() {
   struct header *new = freelist;
@@ -37,9 +37,6 @@ void pfree(void *p) {
 }
 
 void pmalloc_init() {
-  u64 s = (u64)__vmm_alloc_start;
-  u64 e = (u64)__vmm_alloc_end;
-
-  for(; s < e; s += PAGESIZE)
+  for(u64 s = (u64)vmm_end; s < PHYEND; s += PAGESIZE)
     pfree((void *)s);
 }
