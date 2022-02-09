@@ -5,14 +5,14 @@
 
 #define VM_MAX  2
 
-struct vcpu;
-
 struct vm {
   u64 *vttbr;
-  struct vcpu *vcpu;
   char name[16];
+  int used;
 };
 
 extern struct vm vms[VM_MAX];
+
+void new_vm(int ncpu, u64 img_start, u64 img_size, u64 entry, u64 allocated);
 
 #endif

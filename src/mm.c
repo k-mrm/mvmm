@@ -20,7 +20,7 @@ static u64 *pagewalk(u64 *pgt, u64 va) {
   return &pgt[PIDX(3, va)];
 }
 
-static void pagemap(u64 *pgt, u64 va, u64 pa, u64 size, u64 attr) {
+void pagemap(u64 *pgt, u64 va, u64 pa, u64 size, u64 attr) {
   if(va % PAGESIZE != 0 || pa % PAGESIZE != 0 || size % PAGESIZE != 0)
     panic("invalid pagemap");
 
@@ -33,7 +33,7 @@ static void pagemap(u64 *pgt, u64 va, u64 pa, u64 size, u64 attr) {
   }
 }
 
-static void pageunmap(u64 *pgt, u64 va, u64 size) {
+void pageunmap(u64 *pgt, u64 va, u64 size) {
   if(va % PAGESIZE != 0 || size % PAGESIZE != 0)
     panic("invalid pageunmap");
 

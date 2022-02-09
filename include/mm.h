@@ -65,4 +65,7 @@
 #define AI_DEVICE_nGnRnE  0x0
 #define AI_NORMAL_NC      0x44
 
+void pagemap(u64 *pgt, u64 va, u64 pa, u64 size, u64 attr);
+void pageunmap(u64 *pgt, u64 va, u64 size);
+
 #endif
