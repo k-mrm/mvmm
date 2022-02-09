@@ -50,6 +50,10 @@ static void printiu64(i64 num, int base, bool sign) {
   uart_puts(cur);
 }
 
+void print64(u64 x) {
+  printiu64(x, 16, 0);
+}
+
 static int vprintf(const char *fmt) {
   for(int i = 0; fmt[i]; i++) {
     char c = fmt[i];
@@ -90,7 +94,7 @@ int printf(const char *fmt, ...) {
 }
 
 void panic(const char *fmt) {
-  printf("!!!vmm panic ");
+  printf("!!!vmm panic: ");
   vprintf(fmt);
   printf("\n");
 

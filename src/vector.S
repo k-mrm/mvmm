@@ -14,9 +14,9 @@ vectable:
 
 /* current EL with spx */
 .balign 0x80
-  b .
+  b el2_sync
 .balign 0x80
-  b .
+  b el2_irq
 .balign 0x80
   b .
 .balign 0x80
@@ -40,6 +40,11 @@ vectable:
 .balign 0x80
   b .
 .balign 0x80
+  b .
+
+el2_sync:
+  b .
+el2_irq:
   b .
 
 el1_sync:

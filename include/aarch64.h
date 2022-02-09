@@ -9,4 +9,9 @@
 #define intr_enable()   asm volatile("msr daifclr, #2" ::: "memory")
 #define intr_disable()  asm volatile("msr daifset, #2" ::: "memory")
 
+#define HCR_VM    (1<<0)
+#define HCR_TWI   (1<<13)
+#define HCR_TWE   (1<<14)
+#define HCR_RW    (1<<31)
+
 #endif

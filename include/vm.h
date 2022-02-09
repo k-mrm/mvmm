@@ -13,6 +13,6 @@ struct vm {
 
 extern struct vm vms[VM_MAX];
 
-void new_vm(int ncpu, u64 img_start, u64 img_size, u64 entry, u64 allocated);
+void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 allocated);
 
 #endif

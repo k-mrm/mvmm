@@ -1,9 +1,10 @@
 #include "vcpu.h"
+#include "printf.h"
 
 struct vcpu vcpus[VCPU_MAX];
 
 struct vcpu *allocvcpu() {
-  for(struct vcpu *vcpu = &vcpus[0]; vcpu < &vcpus[VCPU_MAX]; vcpu++) {
+  for(struct vcpu *vcpu = vcpus; vcpu < &vcpus[VCPU_MAX]; vcpu++) {
     if(vcpu->state == UNUSED) {
       vcpu->state = CREATED;
       return vcpu;
@@ -11,4 +12,14 @@ struct vcpu *allocvcpu() {
   }
 
   return NULL;
+}
+
+void schedule() {
+  for(;;) {
+    for(struct vcpu *vcpu = vcpus; vcpu < &vcpus[VCPU_MAX]; vcpu++) {
+      if(vcpu->state == READY) {
+        printf("vcpu ready!\n");
+      }
+    }
+  }
 }
