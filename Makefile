@@ -47,6 +47,7 @@ gdb: mvmm
 	$(QEMU) -S -gdb tcp::1234 $(QEMUOPTS)
 
 clean:
-	$(RM) $(OBJS) mvmm *.img
+	make -C guest clean
+	$(RM) $(OBJS) mvmm *.img *.o
 
 .PHONY: qemu gdb clean

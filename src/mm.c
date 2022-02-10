@@ -1,6 +1,7 @@
 #include "mm.h"
 #include "lib.h"
 #include "pmalloc.h"
+#include "printf.h"
 
 static u64 *pagewalk(u64 *pgt, u64 va) {
   for(int level = 1; level < 3; level++) {

@@ -16,6 +16,7 @@ enum vcpu_state {
 
 struct vcpu {
   enum vcpu_state state;
+  const char *name;
   struct vm *vm;
   int cpuid;
   struct {
@@ -23,6 +24,9 @@ struct vcpu {
     u64 sp;
   } __attribute__((packed)) reg;
   struct {
+    u64 spsr_el2;
+    u64 elr_el2;
+
     u64 spsr_el1;
     u64 elr_el1;
     u64 mpidr_el1;
@@ -38,5 +42,7 @@ struct vcpu {
 extern struct vcpu vcpus[VCPU_MAX];
 
 struct vcpu *new_vcpu(struct vm *vm, int vcpuid, u64 entry);
+void free_vcpu(struct vcpu *vcpu);
+void schedule(void) __attribute__((noreturn));
 
 #endif

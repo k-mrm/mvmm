@@ -21,8 +21,11 @@ int vmm_init() {
   u64 hcr = HCR_VM | HCR_TWI | HCR_TWE | HCR_RW;
   write_sysreg(hcr_el2, hcr);
 
-  u64 vtcr = VTCR_T0SZ(25) | VTCR_SH0(0) | VTCR_TG0(0);
+  u64 vtcr = VTCR_T0SZ(25) | VTCR_SH0(0) | VTCR_SL0(1) | VTCR_TG0(0);
   write_sysreg(vtcr_el2, vtcr);
+
+  u64 mair = (AI_DEVICE_nGnRnE << (8 * AI_DEVICE_nGnRnE_IDX)) | (AI_NORMAL_NC << (8 * AI_NORMAL_NC_IDX));
+  write_sysreg(mair_el2, mair);
 
   write_sysreg(vbar_el2, (u64)vectable);
 
