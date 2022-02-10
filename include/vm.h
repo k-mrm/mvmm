@@ -8,6 +8,7 @@
 struct vm {
   u64 *vttbr;
   char name[16];
+  u64 entry;
   int used;
 };
 

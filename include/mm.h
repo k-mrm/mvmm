@@ -20,6 +20,10 @@
 #define TCR_TBI0(n)   (((n) & 0x1) << 37)
 #define TCR_TBI1(n)   (((n) & 0x1) << 38)
 
+#define VTCR_T0SZ(n)  ((n) & 0x3f)
+#define VTCR_SH0(n)   (((n) & 0x3) << 12)
+#define VTCR_TG0(n)   (((n) & 0x3) << 14)
+
 /*
  *  39bit(=512GB) Virtual Address
  *

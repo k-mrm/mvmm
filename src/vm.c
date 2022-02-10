@@ -32,13 +32,10 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 al
   strcpy(vm->name, name);
   struct vcpu *vtmp[ncpu];
 
-  for(int i = 0; i < ncpu; i++) {
-    struct vcpu *vcpu;
-    vtmp[i] = vcpu = allocvcpu();
-    if(!vcpu)
-      panic("vcpu");
-    vcpu->vm = vm;
-  }
+  for(int i = 0; i < ncpu; i++)
+    vtmp[i] = new_vcpu(vm, i, entry);
+
+  vm->entry = entry;
 
   u64 *vttbr = pmalloc();
   if(!vttbr)
