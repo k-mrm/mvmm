@@ -48,6 +48,6 @@ el2_irq:
   b .
 
 el1_sync:
-  b .
+  bl el1_sync_handler
 el1_irq:
   b .

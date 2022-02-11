@@ -46,6 +46,6 @@ qemu: $(TARGET)
 	$(QEMU) $(QEMUOPTS)
 
 clean:
-	$(RM) $(OBJS) $(TARGET) hello.img
+	$(RM) $(OBJS) $(TARGET) hello.img *.d
 
 .PHONY: qemu clean all

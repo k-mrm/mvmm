@@ -8,7 +8,7 @@ _start:
   cbz x1, kernel_boot
 
 kernel_boot:
-  ldr x0, =_stack
+  adrp x0, _stack
   add x0, x0, #4096
   mov sp, x0
   bl main
