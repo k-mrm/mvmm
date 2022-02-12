@@ -24,7 +24,7 @@ QEMUOPTS = -cpu $(QCPU) -machine $(MACHINE) -smp $(NCPU) -m 256
 QEMUOPTS += -global virtio-mmio.force-legacy=false
 QEMUOPTS += -nographic -kernel $(TARGET)
 
-OBJS = hello.o boot.o
+OBJS = hello.o boot.o uart.o
 
 all: hello.img
 

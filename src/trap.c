@@ -9,6 +9,7 @@ void el1_sync_handler() {
   read_sysreg(elr, elr_el2);
   read_sysreg(far, far_el2);
   print64((esr >> 26) & 0x3f);
+  print64(esr & 0x1ffffff);
   printf("\n");
   print64(elr);
   printf("\n");

@@ -52,14 +52,14 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 al
     else
       cpsize = img_size - p;
     memcpy(page, (char *)img_start+p, cpsize);
-    pagemap(vttbr, entry+p, (u64)page, PAGESIZE, PTE_NORMAL);
+    pagemap(vttbr, entry+p, (u64)page, PAGESIZE, S2PTE_NORMAL);
   }
 
   for(; p < allocated; p += PAGESIZE) {
     char *page = pmalloc();
     if(!page)
       panic("ram");
-    pagemap(vttbr, entry+p, (u64)page, PAGESIZE, PTE_NORMAL);
+    pagemap(vttbr, entry+p, (u64)page, PAGESIZE, S2PTE_NORMAL);
   }
 
   vm->vttbr = vttbr;

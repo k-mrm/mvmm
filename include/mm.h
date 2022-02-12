@@ -59,7 +59,16 @@
 #define PTE_PXN (1UL << 53)
 #define PTE_UXN (1UL << 54)
 
+/* stage 2 attribute */
+#define S2PTE_AF  (1 << 10)
+#define S2PTE_S2AP(ap)  (((ap) & 3) << 6)
+#define S2PTE_RW  S2PTE_S2AP(3)
+#define S2PTE_ATTR(attr)  (((attr) & 7) << 2)
+#define S2PTE_NORMAL  S2PTE_ATTR(AI_NORMAL_NC_IDX)
+#define S2PTE_DEVICE  S2PTE_ATTR(AI_DEVICE_nGnRnE_IDX)
+
 #define PAGESIZE  4096    /* 4KB */
+
 #define PAGEROUNDUP(p)  ((p + PAGESIZE - 1) & ~(PAGESIZE - 1))
 
 /* attr index */

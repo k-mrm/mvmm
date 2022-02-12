@@ -18,7 +18,7 @@ ifndef NCPU
 NCPU = 1
 endif
 
-OBJS = src/boot.o src/init.o src/uart.o src/lib.o src/pmalloc.o src/printf.o src/vcpu.o	\
+OBJS = src/boot.o src/init.o src/uart.o src/lib.o src/pmalloc.o src/printf.o src/vcpu.o \
 			 src/vm.o src/mm.o src/vector.o src/guest.o src/trap.o
 
 QEMUOPTS = -cpu $(QCPU) -machine $(MACHINE) -smp $(NCPU) -m 256
