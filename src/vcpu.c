@@ -2,6 +2,7 @@
 #include "vcpu.h"
 #include "printf.h"
 #include "lib.h"
+#include "pcpu.h"
 
 struct vcpu vcpus[VCPU_MAX];
 
@@ -43,16 +44,22 @@ void free_vcpu(struct vcpu *vcpu) {
 }
 
 void schedule() {
+  struct pcpu *pcpu = cur_pcpu();
+
   for(;;) {
     for(struct vcpu *vcpu = vcpus; vcpu < &vcpus[VCPU_MAX]; vcpu++) {
       if(vcpu->state == READY) {
         struct vm *vm = vcpu->vm;
+
+        pcpu->vcpu = vcpu;
 
         vcpu->state = RUNNING;
         write_sysreg(vttbr_el2, vm->vttbr);
         restore_sysreg(vcpu);
 
         asm volatile("eret");
+
+        pcpu->vcpu = NULL;
       }
     }
   }

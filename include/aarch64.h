@@ -14,4 +14,10 @@
 #define HCR_TWE   (1<<14)
 #define HCR_RW    (1<<31)
 
+static inline int cpuid() {
+  int mpidr;
+  read_sysreg(mpidr, mpidr_el1);
+  return mpidr & 0xf;
+}
+
 #endif

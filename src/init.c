@@ -1,11 +1,11 @@
 #include "uart.h"
 #include "aarch64.h"
 #include "pmalloc.h"
-#include "printf.h"
 #include "guest.h"
 #include "vm.h"
 #include "pcpu.h"
 #include "mm.h"
+#include "log.h"
 
 extern struct guest hello;
 void vectable();
@@ -14,9 +14,10 @@ __attribute__((aligned(16))) char _stack[4096*NCPU];
 
 int vmm_init() {
   uart_init();
-  printf("mvmm booting...\n");
+  vmm_log("mvmm booting...\n");
   pmalloc_init();
-  printf("hello\n");
+  pcpu_init();
+  vmm_log("hello\n");
 
   u64 hcr = HCR_VM | HCR_TWI | HCR_TWE | HCR_RW;
   write_sysreg(hcr_el2, hcr);

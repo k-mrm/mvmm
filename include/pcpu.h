@@ -13,4 +13,7 @@ struct pcpu {
 
 extern struct pcpu pcpus[NCPU];
 
+struct pcpu *cur_pcpu(void);
+void pcpu_init(void);
+
 #endif

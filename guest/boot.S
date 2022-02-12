@@ -12,4 +12,8 @@ kernel_boot:
   add x0, x0, #4096
   mov sp, x0
   bl main
-  b .
+  b halt
+
+halt:
+  wfi
+  b halt
