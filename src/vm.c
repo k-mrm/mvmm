@@ -4,8 +4,9 @@
 #include "mm.h"
 #include "pmalloc.h"
 #include "lib.h"
-#include "printf.h"
 #include "memmap.h"
+#include "printf.h"
+#include "log.h"
 
 struct vm vms[VM_MAX];
 
@@ -21,7 +22,7 @@ static struct vm *allocvm() {
 }
 
 void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 allocated) {
-  printf("new VM\n");
+  vmm_log("new vm\n");
 
   if(img_size > allocated)
     panic("img_size > allocated");

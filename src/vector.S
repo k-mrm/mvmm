@@ -43,11 +43,11 @@ vectable:
   b .
 
 el2_sync:
-  b .
+  bl hyp_sync_handler
 el2_irq:
   b .
 
 el1_sync:
-  bl el1_sync_handler
+  bl vm_sync_handler
 el1_irq:
   b .
