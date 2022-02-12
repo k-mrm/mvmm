@@ -5,6 +5,7 @@
 #include "pmalloc.h"
 #include "lib.h"
 #include "printf.h"
+#include "memmap.h"
 
 struct vm vms[VM_MAX];
 
@@ -61,6 +62,8 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 al
       panic("ram");
     pagemap(vttbr, entry+p, (u64)page, PAGESIZE, S2PTE_NORMAL);
   }
+
+  pagemap(vttbr, UARTBASE, UARTBASE, PAGESIZE, S2PTE_DEVICE);
 
   vm->vttbr = vttbr;
 
