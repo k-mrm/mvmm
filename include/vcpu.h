@@ -21,12 +21,10 @@ struct vcpu {
   int cpuid;
   struct {
     u64 x[31];
-    u64 sp;
+    u64 spsr;
+    u64 elr;
   } __attribute__((packed)) reg;
   struct {
-    u64 spsr_el2;
-    u64 elr_el2;
-
     u64 spsr_el1;
     u64 elr_el1;
     u64 mpidr_el1;

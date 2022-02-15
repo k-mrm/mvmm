@@ -29,8 +29,8 @@ struct vcpu *new_vcpu(struct vm *vm, int vcpuid, u64 entry) {
   vcpu->vm = vm;
   vcpu->cpuid = vcpuid;
 
-  vcpu->sys.spsr_el2 = 0x3c5;   /* EL1 */
-  vcpu->sys.elr_el2 = entry;
+  vcpu->reg.spsr = 0x3c5;   /* EL1 */
+  vcpu->reg.elr = entry;
   vcpu->sys.mpidr_el1 = vcpuid; /* TODO: affinity */
   vcpu->sys.midr_el1 = 0x410fd081;  /* cortex-a72 */
 
@@ -43,31 +43,32 @@ void free_vcpu(struct vcpu *vcpu) {
   memset(vcpu, 0, sizeof(*vcpu));
 }
 
+void trapret(void);
 void schedule() {
+  int zero = 0;
   struct pcpu *pcpu = cur_pcpu();
 
   for(;;) {
     for(struct vcpu *vcpu = vcpus; vcpu < &vcpus[VCPU_MAX]; vcpu++) {
       if(vcpu->state == READY) {
-        struct vm *vm = vcpu->vm;
-
         pcpu->vcpu = vcpu;
 
         vcpu->state = RUNNING;
-        write_sysreg(vttbr_el2, vm->vttbr);
+
+        write_sysreg(vttbr_el2, vcpu->vm->vttbr);
+        write_sysreg(tpidr_el2, vcpu);
         restore_sysreg(vcpu);
 
-        asm volatile("eret");
+        trapret();
 
         pcpu->vcpu = NULL;
+        write_sysreg(tpidr_el2, zero);
       }
     }
   }
 }
 
 static void save_sysreg(struct vcpu *vcpu) {
-  read_sysreg(vcpu->sys.spsr_el2, spsr_el2);
-  read_sysreg(vcpu->sys.elr_el2, elr_el2);
   read_sysreg(vcpu->sys.spsr_el1, spsr_el1);
   read_sysreg(vcpu->sys.elr_el1, elr_el1);
   read_sysreg(vcpu->sys.mpidr_el1, mpidr_el1);
@@ -80,8 +81,6 @@ static void save_sysreg(struct vcpu *vcpu) {
 }
 
 static void restore_sysreg(struct vcpu *vcpu) {
-  write_sysreg(spsr_el2, vcpu->sys.spsr_el2);
-  write_sysreg(elr_el2, vcpu->sys.elr_el2);
   write_sysreg(spsr_el1, vcpu->sys.spsr_el1);
   write_sysreg(elr_el1, vcpu->sys.elr_el1);
   write_sysreg(vmpidr_el2, vcpu->sys.mpidr_el1);
