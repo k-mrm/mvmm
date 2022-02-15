@@ -1,13 +1,18 @@
 #include "types.h"
 #include "aarch64.h"
 #include "printf.h"
+#include "vcpu.h"
 
 void hyp_sync_handler() {
   panic("sync el2");
 }
 
 void vm_sync_handler() {
+  struct vcpu *vcpu;
+  read_sysreg(vcpu, tpidr_el2);
+
   printf("el1sync!\n");
+
   u64 esr, elr, far;
   read_sysreg(esr, esr_el2);
   read_sysreg(elr, elr_el2);
@@ -18,6 +23,7 @@ void vm_sync_handler() {
   switch(ec) {
     case 0b000001:    /* WF* */
       printf("wf* trapped\n");
+      vcpu->reg.elr += 4;
       break;
     default:
       print64(ec);
