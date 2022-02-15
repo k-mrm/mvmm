@@ -2,6 +2,7 @@
 #include "aarch64.h"
 #include "printf.h"
 #include "vcpu.h"
+#include "log.h"
 
 void hyp_sync_handler() {
   panic("sync el2");
@@ -11,7 +12,7 @@ void vm_sync_handler() {
   struct vcpu *vcpu;
   read_sysreg(vcpu, tpidr_el2);
 
-  printf("el1sync!\n");
+  vmm_log("el1sync!\n");
 
   u64 esr, elr, far;
   read_sysreg(esr, esr_el2);
@@ -22,7 +23,7 @@ void vm_sync_handler() {
 
   switch(ec) {
     case 0b000001:    /* WF* */
-      printf("wf* trapped\n");
+      vmm_log("wf* trapped\n");
       vcpu->reg.elr += 4;
       break;
     default:
