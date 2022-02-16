@@ -2,12 +2,14 @@
 #define MVMM_VM_H
 
 #include "types.h"
+#include "vgic.h"
 
 #define VM_MAX  2
 
 struct vm {
-  u64 *vttbr;
   char name[16];
+  u64 *vttbr;
+  struct vgic *vgic;
   u64 entry;
   int used;
 };
