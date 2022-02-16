@@ -1,6 +1,11 @@
 #ifndef MVMM_AARCH64_H
 #define MVMM_AARCH64_H
 
+#include "types.h"
+
+#define sysreg32(op1, crn, crm, op2)  \
+  s3_ ## op1 ## _ ## crn ## _ ## crm ## _ ## op2
+
 #define read_sysreg(val, reg) \
   asm volatile("mrs %0, " #reg : "=r"(val))
 #define __write_sysreg(reg, val)  \
