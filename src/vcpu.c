@@ -3,6 +3,7 @@
 #include "printf.h"
 #include "lib.h"
 #include "pcpu.h"
+#include "log.h"
 
 struct vcpu vcpus[VCPU_MAX];
 
@@ -45,7 +46,6 @@ void free_vcpu(struct vcpu *vcpu) {
 
 void trapret(void);
 void schedule() {
-  int zero = 0;
   struct pcpu *pcpu = cur_pcpu();
 
   for(;;) {
@@ -55,6 +55,8 @@ void schedule() {
 
         vcpu->state = RUNNING;
 
+        vmm_log("entering vm...\n");
+
         write_sysreg(vttbr_el2, vcpu->vm->vttbr);
         write_sysreg(tpidr_el2, vcpu);
         restore_sysreg(vcpu);
@@ -62,7 +64,7 @@ void schedule() {
         trapret();
 
         pcpu->vcpu = NULL;
-        write_sysreg(tpidr_el2, zero);
+        write_sysreg(tpidr_el2, 0);
       }
     }
   }

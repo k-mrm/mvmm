@@ -19,7 +19,7 @@ int vmm_init() {
   pcpu_init();
   vmm_log("hello\n");
 
-  u64 hcr = HCR_VM | HCR_TWI | HCR_TWE | HCR_RW;
+  u64 hcr = HCR_VM | HCR_TWI | HCR_TWE | HCR_RW | HCR_IMO;
   write_sysreg(hcr_el2, hcr);
 
   u64 vtcr = VTCR_T0SZ(25) | VTCR_SH0(0) | VTCR_SL0(1) | VTCR_TG0(0);
