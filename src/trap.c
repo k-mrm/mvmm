@@ -8,11 +8,15 @@ void hyp_sync_handler() {
   panic("sync el2");
 }
 
+void vm_irq_handler() {
+  vmm_log("el0/1 irq!\n");
+}
+
 void vm_sync_handler() {
   struct vcpu *vcpu;
   read_sysreg(vcpu, tpidr_el2);
 
-  vmm_log("el1sync!\n");
+  vmm_log("el0/1 sync!\n");
 
   u64 esr, elr, far;
   read_sysreg(esr, esr_el2);

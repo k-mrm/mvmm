@@ -117,4 +117,10 @@ trapret:
 
   eret
 el1_irq:
-  b .
+  vm_save_reg
+
+  bl vm_irq_handler
+
+  vm_restore_reg
+
+  eret
