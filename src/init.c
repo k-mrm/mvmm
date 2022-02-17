@@ -6,6 +6,7 @@
 #include "pcpu.h"
 #include "mm.h"
 #include "log.h"
+#include "vgic.h"
 
 extern struct guest hello;
 void vectable();
@@ -17,6 +18,7 @@ int vmm_init() {
   vmm_log("mvmm booting...\n");
   pmalloc_init();
   pcpu_init();
+  vgic_init();
   vmm_log("hello\n");
 
   u64 hcr = HCR_VM | HCR_TWI | HCR_TWE | HCR_RW | HCR_IMO;
@@ -31,6 +33,8 @@ int vmm_init() {
   write_sysreg(vbar_el2, (u64)vectable);
 
   new_vm("hello", 1, hello.start, hello.size, 0x40000000, 256*1024);
+
+  intr_enable();
 
   schedule();
 }

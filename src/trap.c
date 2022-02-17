@@ -18,7 +18,7 @@ void vm_sync_handler() {
 
   vmm_log("el0/1 sync!\n");
 
-  u64 esr, elr, far;
+  u64 esr, elr, far, vbar;
   read_sysreg(esr, esr_el2);
   read_sysreg(elr, elr_el2);
   read_sysreg(far, far_el2);
@@ -26,9 +26,14 @@ void vm_sync_handler() {
   u64 iss = esr & 0x1ffffff;
 
   switch(ec) {
-    case 0b000001:    /* WF* */
+    case 0x1:     /* WF* */
       vmm_log("wf* trapped\n");
       vcpu->reg.elr += 4;
+      break;
+    case 0x16:    /* hvc */
+      vmm_log("hvc ");
+      print64(iss);
+      printf("\n");
       break;
     default:
       print64(ec);

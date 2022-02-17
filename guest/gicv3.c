@@ -1,4 +1,5 @@
 #include "gicv3.h"
+#include "uart.h"
 
 typedef unsigned int u32;
 typedef unsigned long u64;
@@ -7,7 +8,7 @@ typedef _Bool bool;
 #define true 1
 #define false 0
 
-#define GICBASE    0x08000000L
+#define GICBASE     0x08000000L
 #define UART_IRQ    33
 
 #define GICD_CTLR           (0x0)
@@ -213,6 +214,7 @@ void gicv3_init_percpu() {
 }
 
 void gicv3_init() {
+  uart_puts("gicv3 init...\n");
   gicv3.gicd = (char *)GICBASE;
   for(int i = 0; i < 1; i++) {
     gicv3.rdist_addrs[i] = (char *)(GICBASE + 0xa0000 + (i) * 0x20000);

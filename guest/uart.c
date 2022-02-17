@@ -43,7 +43,12 @@ int uart_getc() {
 }
 
 void uartintr() {
-  ;
+  int c;
+  while((c = uart_getc()) >= 0) {
+    uart_puts("uartintr\n");
+  }
+
+  *R(ICR) = (1<<4) | (1<<5);
 }
 
 void uart_init() {

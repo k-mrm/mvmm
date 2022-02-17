@@ -11,7 +11,7 @@
 __attribute__((aligned(16))) char _stack[4096];
 
 void el1trap() {
-  uart_puts("traaaap");
+  uartintr();
 }
 
 void vectable();
@@ -22,7 +22,7 @@ int main(void) {
   gicv3_init();
   gicv3_init_percpu();
   write_sysreg(vbar_el1, (unsigned long)vectable);
-  
+
   asm volatile("msr daifclr, #0xf" ::: "memory");
 
   uart_puts("sayonara\n");

@@ -7,4 +7,6 @@ struct vgic {
   ;
 };
 
+void vgic_init(void);
+
 #endif
