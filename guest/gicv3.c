@@ -10,6 +10,7 @@ typedef _Bool bool;
 
 #define GICBASE     0x08000000L
 #define UART_IRQ    33
+#define TIMER_IRQ   27
 
 #define GICD_CTLR           (0x0)
 #define GICD_TYPER          (0x4)
@@ -209,6 +210,8 @@ void gicv3_init_percpu() {
   gic_cpu_init();
   gic_dist_init();
   gic_redist_init(0);
+
+  gic_setup_ppi(0, TIMER_IRQ, 0);
 
   gic_enable();
 }

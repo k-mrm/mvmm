@@ -9,7 +9,7 @@ void hyp_sync_handler() {
 }
 
 void vm_irq_handler() {
-  vmm_log("el0/1 irq!\n");
+  panic("el0/1 irq!");
 }
 
 void vm_sync_handler() {
@@ -18,7 +18,7 @@ void vm_sync_handler() {
 
   vmm_log("el0/1 sync!\n");
 
-  u64 esr, elr, far, vbar;
+  u64 esr, elr, far, daif;
   read_sysreg(esr, esr_el2);
   read_sysreg(elr, elr_el2);
   read_sysreg(far, far_el2);

@@ -103,6 +103,7 @@ vectable:
 
 el2_sync:
   bl hyp_sync_handler
+
 el2_irq:
   b .
 
@@ -116,6 +117,7 @@ trapret:
   vm_restore_reg
 
   eret
+
 el1_irq:
   vm_save_reg
 

@@ -21,9 +21,6 @@ int vmm_init() {
   vgic_init();
   vmm_log("hello\n");
 
-  u64 hcr = HCR_VM | HCR_TWI | HCR_TWE | HCR_RW | HCR_IMO;
-  write_sysreg(hcr_el2, hcr);
-
   u64 vtcr = VTCR_T0SZ(25) | VTCR_SH0(0) | VTCR_SL0(1) | VTCR_TG0(0);
   write_sysreg(vtcr_el2, vtcr);
 
@@ -32,9 +29,12 @@ int vmm_init() {
 
   write_sysreg(vbar_el2, (u64)vectable);
 
-  new_vm("hello", 1, hello.start, hello.size, 0x40000000, 256*1024);
+  u64 hcr = HCR_VM | HCR_FMO | HCR_IMO | HCR_TWI | HCR_TWE | HCR_RW;
+  write_sysreg(hcr_el2, hcr);
 
-  intr_enable();
+  isb();
+
+  new_vm("hello", 1, hello.start, hello.size, 0x40000000, 256*1024);
 
   schedule();
 }

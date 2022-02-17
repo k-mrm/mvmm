@@ -15,6 +15,6 @@
 
 void vgic_init(void) {
   vmm_log("vgic init...\n");
-  // write_sysreg(ich_vmcr_el2, ICH_VMCR_VENG1);
-  // write_sysreg(ich_hcr_el2, ICH_HCR_EN);
+  write_sysreg(ich_vmcr_el2, ICH_VMCR_VENG1);
+  write_sysreg(ich_hcr_el2, ICH_HCR_EN);
 }
