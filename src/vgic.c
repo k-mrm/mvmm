@@ -76,7 +76,7 @@ static u64 read_lr(int n) {
     case 13:  read_sysreg(val, ich_lr13_el2); break;
     case 14:  read_sysreg(val, ich_lr14_el2); break;
     case 15:  read_sysreg(val, ich_lr15_el2); break;
-    defalut:  panic("?");
+    default:  panic("?");
   }
 
   return val;
@@ -100,7 +100,7 @@ static void write_lr(int n, u64 val) {
     case 13:  write_sysreg(ich_lr13_el2, val); break;
     case 14:  write_sysreg(ich_lr14_el2, val); break;
     case 15:  write_sysreg(ich_lr15_el2, val); break;
-    defalut:  panic("?");
+    default:  panic("?");
   }
 }
 
