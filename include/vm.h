@@ -2,9 +2,8 @@
 #define MVMM_VM_H
 
 #include "types.h"
+#include "param.h"
 #include "vgic.h"
-
-#define VM_MAX  2
 
 struct vm {
   char name[16];

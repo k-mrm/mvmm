@@ -45,6 +45,7 @@ typedef _Bool bool;
 #define GICR_IGRPMODR0      (SGI_BASE+0xd00)
 
 static bool is_sgi_ppi(u32 id);
+bool gic_enabled(void);
 
 static inline u32 icc_igrpen1_el1() {
   u32 x;
@@ -117,6 +118,11 @@ static void gicr_enable_int(u32 cpuid, u32 intid) {
   u32 is = rr32(cpuid, GICR_ISENABLER0);
   is |= 1 << (intid % 32);
   wr32(cpuid, GICR_ISENABLER0, is);
+}
+
+static bool gicr_int_enabled(u32 cpuid, u32 intid) {
+  u32 is = rr32(cpuid, GICR_ISENABLER0);
+  return is & (1 << (intid % 32));
 }
 
 static void gic_clear_pending(u32 intid) {

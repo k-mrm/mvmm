@@ -2,6 +2,9 @@
 #include "gicv3.h"
 #include "hello.h"
 
+#define intr_enable() \
+  asm volatile("msr daifclr, #0x2" ::: "memory");
+
 __attribute__((aligned(16))) char _stack[4096];
 
 void el1trap() {
@@ -18,7 +21,7 @@ int main(void) {
   timerinit();
   write_sysreg(vbar_el1, (unsigned long)vectable);
 
-  asm volatile("msr daifclr, #0x2" ::: "memory");
+  intr_enable();
 
   uart_puts("sayonara\n");
 

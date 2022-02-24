@@ -3,8 +3,7 @@
 
 #include "types.h"
 #include "vcpu.h"
-
-#define NCPU  1
+#include "param.h"
 
 struct pcpu {
   int cpuid;

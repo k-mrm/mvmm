@@ -6,8 +6,10 @@
 #define sysreg32(op1, crn, crm, op2)  \
   s3_ ## op1 ## _ ## crn ## _ ## crm ## _ ## op2
 
-#define read_sysreg(val, reg) \
+#define __read_sysreg(val, reg) \
   asm volatile("mrs %0, " #reg : "=r"(val))
+#define read_sysreg(val, reg)  __read_sysreg(val, reg)
+
 #define __write_sysreg(reg, val)  \
   asm volatile("msr " #reg ", %0" : : "r"(val))
 #define write_sysreg(reg, val)  \
@@ -19,6 +21,7 @@
 #define isb()   asm volatile("isb");
 
 #define HCR_VM    (1<<0)
+#define HCR_SWIO  (1<<1)
 #define HCR_FMO   (1<<3)
 #define HCR_IMO   (1<<4)
 #define HCR_TWI   (1<<13)

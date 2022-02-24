@@ -3,8 +3,7 @@
 
 #include "types.h"
 #include "vm.h"
-
-#define VCPU_MAX 4
+#include "param.h"
 
 enum vcpu_state {
   UNUSED,

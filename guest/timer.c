@@ -14,7 +14,7 @@ static void reload_timer(void);
 void timerinit() {
   disable_timer();
   reload_timer();
-  enable_timer();
+  //enable_timer();
 }
 
 static void enable_timer() {

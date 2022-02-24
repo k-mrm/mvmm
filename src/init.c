@@ -18,7 +18,7 @@ int vmm_init() {
   vmm_log("mvmm booting...\n");
   pmalloc_init();
   pcpu_init();
-  vgic_init();
+  gic_init();
   vmm_log("hello\n");
 
   u64 vtcr = VTCR_T0SZ(25) | VTCR_SH0(0) | VTCR_SL0(1) | VTCR_TG0(0);
@@ -29,10 +29,13 @@ int vmm_init() {
 
   write_sysreg(vbar_el2, (u64)vectable);
 
-  u64 hcr = HCR_VM | HCR_FMO | HCR_IMO | HCR_TWI | HCR_TWE | HCR_RW;
+  u64 hcr = HCR_VM | HCR_SWIO | HCR_FMO | HCR_IMO |
+            HCR_TWI | HCR_TWE | HCR_RW;
   write_sysreg(hcr_el2, hcr);
 
   isb();
+
+  intr_enable();
 
   new_vm("hello", 1, hello.start, hello.size, 0x40000000, 256*1024);
 
