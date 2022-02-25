@@ -24,6 +24,7 @@
 #define ich_lr14_el2  sysreg32(4, c12, c13, 6)
 #define ich_lr15_el2  sysreg32(4, c12, c13, 7)
 
+#define icc_iar1_el1     sysreg32(0, c12, c12, 0)
 #define icc_igrpen0_el1  sysreg32(0, c12, c12, 6)
 #define icc_igrpen1_el1  sysreg32(0, c12, c12, 7)
 #define icc_pmr_el1      sysreg32(0, c4, c6, 0)
@@ -36,6 +37,23 @@
 #define ICH_LR_VINTID(n)   ((n) & 0xffffffff)
 #define ICH_LR_PINTID(n)   (((n) & 0x3ff) << 32)
 #define ICH_LR_GROUP(n)    (((n) & 0x1) << 60)
+#define ICH_LR_HW          (1 << 61)
+#define ICH_LR_STATE(n)    (((n) & 0x4) << 62)
+#define LR_PENDING   1
+#define LR_ACTIVE    2
+
+struct vgic vgics[VM_MAX];
+
+static struct vgic *allocvgic() {
+  for(struct vgic *vgic = vgics; vgic < &vgics[VM_MAX]; vgic++) {
+    if(vgic->used == 0) {
+      vgic->used = 1;
+      return vgic;
+    }
+  }
+
+  return NULL;
+}
 
 static void gicc_init(void) {
   write_sysreg(icc_igrpen0_el1, 0);
@@ -104,8 +122,24 @@ static void write_lr(int n, u64 val) {
   }
 }
 
+static u64 make_lr(u32 pirq, u32 virq, int grp) {
+  return ICH_LR_STATE(LR_PENDING) | ICH_LR_HW | ICH_LR_GROUP(grp) | ICH_LR_PINTID(pirq) | ICH_LR_VINTID(virq);
+}
+
+void gic_lr_pending(u32 pirq, u32 virq, int grp) {
+  u64 lr = make_lr(pirq, virq, grp);
+}
+
+u32 gic_read_irq() {
+  u32 i;
+  read_sysreg(i, icc_iar1_el1);
+  return i;
+}
+
 struct vgic *new_vgic() {
-  ;
+  struct vgic *vgic = allocvgic();
+
+  return vgic;
 }
 
 void gic_init(void) {

@@ -49,6 +49,6 @@ gdb: mvmm
 
 clean:
 	make -C guest clean
-	$(RM) $(OBJS) mvmm *.img *.o
+	$(RM) $(OBJS) mvmm *.img *.o */*.d
 
 .PHONY: qemu gdb clean

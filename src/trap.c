@@ -13,14 +13,21 @@ void hyp_irq_handler() {
 }
 
 void vm_irq_handler() {
-  panic("el0/1 irq!");
+  vmm_log("vm_irq_handler hello\n");
+
+  struct vcpu *vcpu;
+  read_sysreg(vcpu, tpidr_el2);
+
+  u32 pirq = gic_read_irq();
+  u32 virq = pirq;
+
+  gic_lr_pending(vcpu, pirq, virq, 1);
 }
 
 void vm_sync_handler() {
   struct vcpu *vcpu;
   read_sysreg(vcpu, tpidr_el2);
 
-  vgic_miru();
   vmm_log("el0/1 sync!\n");
 
   u64 esr, elr, far, daif;

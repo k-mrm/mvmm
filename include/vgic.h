@@ -5,10 +5,11 @@
 #include "param.h"
 
 struct vgic {
-  ;
-} vgic[VM_MAX];
+  int used;
+};
 
 void gic_init(void);
-struct vgic *new_vgic();
+struct vgic *new_vgic(void);
+u32 gic_read_irq(void);
 
 #endif
