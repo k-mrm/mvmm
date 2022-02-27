@@ -17,12 +17,21 @@ void vm_irq_handler() {
 
   struct vcpu *vcpu;
   read_sysreg(vcpu, tpidr_el2);
+  struct vgic *vgic = vcpu->vm->vgic;
 
-  u32 pirq = gic_read_irq();
+  gic_irq_enter(vgic);
+
+  u32 iar = gic_read_iar();
+  u32 pirq = iar & 0x3ff;
   u32 virq = pirq;
   print64(pirq);
 
+  // drop primary
+  gic_eoi(iar, 1);
+
   vgic_lr_pending(vcpu->vm->vgic, pirq, virq, 1);
+
+  // gic_deactive_int(pirq);
 }
 
 void vm_sync_handler() {

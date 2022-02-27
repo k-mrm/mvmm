@@ -24,10 +24,16 @@
 #define ich_lr14_el2  sysreg32(4, c12, c13, 6)
 #define ich_lr15_el2  sysreg32(4, c12, c13, 7)
 
+#define icc_pmr_el1      sysreg32(0, c4, c6, 0)
+#define icc_eoir0_el1    sysreg32(0, c12, c8, 1)
+#define icc_dir_el1      sysreg32(0, c12, c11, 1)
 #define icc_iar1_el1     sysreg32(0, c12, c12, 0)
+#define icc_eoir1_el1    sysreg32(0, c12, c12, 1)
+#define icc_ctlr_el1     sysreg32(0, c12, c12, 4)
 #define icc_igrpen0_el1  sysreg32(0, c12, c12, 6)
 #define icc_igrpen1_el1  sysreg32(0, c12, c12, 7)
-#define icc_pmr_el1      sysreg32(0, c4, c6, 0)
+
+#define ICC_CTLR_EOImode(m) ((m) << 1)
 
 #define ICH_HCR_EN  (1<<0)
 
@@ -39,10 +45,14 @@
 #define ICH_LR_GROUP(n)    (((n) & 0x1L) << 60)
 #define ICH_LR_HW          (1L << 61)
 #define ICH_LR_STATE(n)    (((n) & 0x3L) << 62)
+#define LR_INACTIVE  0L
 #define LR_PENDING   1L
 #define LR_ACTIVE    2L
+#define LR_MASK      3L
 
 struct vgic vgics[VM_MAX];
+
+static int gic_lr_max = 0;
 
 static struct vgic *allocvgic() {
   for(struct vgic *vgic = vgics; vgic < &vgics[VM_MAX]; vgic++) {
@@ -55,27 +65,11 @@ static struct vgic *allocvgic() {
   return NULL;
 }
 
-static void gicc_init(void) {
-  write_sysreg(icc_igrpen0_el1, 0);
-  write_sysreg(icc_igrpen1_el1, 0);
-
-  write_sysreg(icc_pmr_el1, 0xff);
-
-  write_sysreg(icc_igrpen0_el1, 1);
-  write_sysreg(icc_igrpen1_el1, 1);
-
-  isb();
-}
-
-static void gich_init(void) {
-  write_sysreg(ich_vmcr_el2, ICH_VMCR_VENG0|ICH_VMCR_VENG1);
-  write_sysreg(ich_hcr_el2, ICH_HCR_EN);
-
-  isb();
-}
-
 static u64 read_lr(int n) {
   u64 val;
+
+  if(gic_lr_max < n)
+    panic("lr");
 
   switch(n) {
     case 0:   read_sysreg(val, ich_lr0_el2); break;
@@ -101,6 +95,9 @@ static u64 read_lr(int n) {
 }
 
 static void write_lr(int n, u64 val) {
+  if(gic_lr_max < n)
+    panic("lr");
+
   switch(n) {
     case 0:   write_sysreg(ich_lr0_el2, val); break;
     case 1:   write_sysreg(ich_lr1_el2, val); break;
@@ -126,27 +123,95 @@ static u64 make_lr(u32 pirq, u32 virq, int grp) {
   return ICH_LR_STATE(LR_PENDING) | ICH_LR_HW | ICH_LR_GROUP(grp) | ICH_LR_PINTID(pirq) | ICH_LR_VINTID(virq);
 }
 
+static int vgic_alloc_lr(struct vgic *vgic) {
+  for(int i = 0; i < gic_lr_max; i++) {
+    if(vgic->used_lr[i] == 0) {
+      vgic->used_lr[i] = 1;
+      return i;
+    }
+  }
+
+  return -1;
+}
+
 void vgic_lr_pending(struct vgic *vgic, u32 pirq, u32 virq, int grp) {
   u64 lr = make_lr(pirq, virq, grp);
-  int n = vgic->nlr++;
+
+  int n = vgic_alloc_lr(vgic);
+  if(n < 0)
+    panic("no lr");
+
   vmm_log("pending ");
   print64(lr);
 
   write_lr(n, lr);
 }
 
-u32 gic_read_irq() {
+u32 gic_read_iar() {
   u32 i;
   read_sysreg(i, icc_iar1_el1);
   return i;
 }
 
+void gic_eoi(u32 iar, int grp) {
+  if(grp == 0)
+    write_sysreg(icc_eoir0_el1, iar);
+  else if(grp == 1)
+    write_sysreg(icc_eoir1_el1, iar);
+  else
+    panic("?");
+}
+
+void gic_deactive_int(u32 irq) {
+  write_sysreg(icc_dir_el1, irq);
+}
+
+void gic_irq_enter(struct vgic *vgic) {
+  for(int i = 0; i < gic_lr_max; i++) {
+    if(vgic->used_lr[i] == 1) {
+      u64 lr = read_lr(i);
+      /* handled by guest */
+      if((lr & ICH_LR_STATE(LR_MASK)) == LR_INACTIVE)
+        vgic->used_lr[i] = 0;
+    }
+  }
+}
+
+static int gic_max_listregs() {
+  u64 i;
+  read_sysreg(i, ich_vtr_el2);
+  return (i & 0x1f) + 1;
+}
+
 struct vgic *new_vgic() {
   struct vgic *vgic = allocvgic();
 
-  vgic->nlr = 0;
+  for(int i = 0; i < gic_lr_max; i++)
+    vgic->used_lr[i] = 0;
 
   return vgic;
+}
+
+static void gicc_init(void) {
+  write_sysreg(icc_igrpen0_el1, 0);
+  write_sysreg(icc_igrpen1_el1, 0);
+
+  write_sysreg(icc_pmr_el1, 0xff);
+  write_sysreg(icc_ctlr_el1, ICC_CTLR_EOImode(1));
+
+  write_sysreg(icc_igrpen0_el1, 1);
+  write_sysreg(icc_igrpen1_el1, 1);
+
+  isb();
+}
+
+static void gich_init(void) {
+  write_sysreg(ich_vmcr_el2, ICH_VMCR_VENG0|ICH_VMCR_VENG1);
+  write_sysreg(ich_hcr_el2, ICH_HCR_EN);
+
+  gic_lr_max = gic_max_listregs();
+
+  isb();
 }
 
 void gic_init(void) {
