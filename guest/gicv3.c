@@ -1,16 +1,13 @@
 #include "gicv3.h"
 #include "uart.h"
+#include "hello.h"
 
-typedef unsigned int u32;
-typedef unsigned long u64;
 typedef _Bool bool;
 
 #define true 1
 #define false 0
 
 #define GICBASE     0x08000000L
-#define UART_IRQ    33
-#define TIMER_IRQ   27
 
 #define GICD_CTLR           (0x0)
 #define GICD_TYPER          (0x4)

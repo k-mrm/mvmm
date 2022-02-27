@@ -7,3 +7,6 @@
 
 void timerinit(void);
 void timerintr(void);
+
+#define UART_IRQ    33
+#define TIMER_IRQ   27

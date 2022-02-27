@@ -129,7 +129,7 @@ static u64 make_lr(u32 pirq, u32 virq, int grp) {
 void vgic_lr_pending(struct vgic *vgic, u32 pirq, u32 virq, int grp) {
   u64 lr = make_lr(pirq, virq, grp);
   int n = vgic->nlr++;
-  printf("pending");
+  vmm_log("pending ");
   print64(lr);
 
   write_lr(n, lr);

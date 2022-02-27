@@ -13,13 +13,14 @@ void hyp_irq_handler() {
 }
 
 void vm_irq_handler() {
-  vmm_log("vm_irq_handler hello\n");
+  vmm_log("vm_irq_handler hello ");
 
   struct vcpu *vcpu;
   read_sysreg(vcpu, tpidr_el2);
 
   u32 pirq = gic_read_irq();
   u32 virq = pirq;
+  print64(pirq);
 
   vgic_lr_pending(vcpu->vm->vgic, pirq, virq, 1);
 }

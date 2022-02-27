@@ -21,6 +21,7 @@ typedef unsigned int u32;
 #define IMSC  0x38
 #define INT_RX_ENABLE (1<<4)
 #define INT_TX_ENABLE (1<<5)
+#define MIS   0x40
 #define ICR   0x44
 
 void uart_putc(char c) {
@@ -43,12 +44,22 @@ int uart_getc() {
 }
 
 void uartintr() {
-  int c;
-  while((c = uart_getc()) >= 0) {
-    uart_puts("uartintr\n");
+  int status = *R(MIS);
+
+  if(status & INT_RX_ENABLE) {
+    for(;;) {
+      int c = uart_getc();
+      if(c < 0)
+        break;
+      uart_putc(c);
+    }
   }
 
-  *R(ICR) = (1<<4) | (1<<5);
+  if(status & INT_TX_ENABLE) {
+    uart_putc('!');
+  }
+
+  *R(ICR) = (1<<4);
 }
 
 void uart_init() {
@@ -56,5 +67,5 @@ void uart_init() {
   *R(IMSC) = 0;
   *R(LCRH) = LCRH_FEN | LCRH_WLEN_8BIT;
   *R(CR) = 0x301;   /* RXE, TXE, UARTEN */
-  *R(IMSC) = (1<<4) | (1<<5);
+  *R(IMSC) = (1<<4);
 }
