@@ -34,13 +34,13 @@
 #define ICH_VMCR_VENG0  (1<<0)
 #define ICH_VMCR_VENG1  (1<<1)
 
-#define ICH_LR_VINTID(n)   ((n) & 0xffffffff)
-#define ICH_LR_PINTID(n)   (((n) & 0x3ff) << 32)
-#define ICH_LR_GROUP(n)    (((n) & 0x1) << 60)
-#define ICH_LR_HW          (1 << 61)
-#define ICH_LR_STATE(n)    (((n) & 0x4) << 62)
-#define LR_PENDING   1
-#define LR_ACTIVE    2
+#define ICH_LR_VINTID(n)   ((n) & 0xffffffffL)
+#define ICH_LR_PINTID(n)   (((n) & 0x3ffL) << 32)
+#define ICH_LR_GROUP(n)    (((n) & 0x1L) << 60)
+#define ICH_LR_HW          (1L << 61)
+#define ICH_LR_STATE(n)    (((n) & 0x3L) << 62)
+#define LR_PENDING   1L
+#define LR_ACTIVE    2L
 
 struct vgic vgics[VM_MAX];
 
@@ -126,8 +126,13 @@ static u64 make_lr(u32 pirq, u32 virq, int grp) {
   return ICH_LR_STATE(LR_PENDING) | ICH_LR_HW | ICH_LR_GROUP(grp) | ICH_LR_PINTID(pirq) | ICH_LR_VINTID(virq);
 }
 
-void gic_lr_pending(u32 pirq, u32 virq, int grp) {
+void vgic_lr_pending(struct vgic *vgic, u32 pirq, u32 virq, int grp) {
   u64 lr = make_lr(pirq, virq, grp);
+  int n = vgic->nlr++;
+  printf("pending");
+  print64(lr);
+
+  write_lr(n, lr);
 }
 
 u32 gic_read_irq() {
@@ -138,6 +143,8 @@ u32 gic_read_irq() {
 
 struct vgic *new_vgic() {
   struct vgic *vgic = allocvgic();
+
+  vgic->nlr = 0;
 
   return vgic;
 }

@@ -73,6 +73,8 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 al
 
   vm->vttbr = vttbr;
 
+  vm->vgic = new_vgic();
+
   for(int i = 0; i < ncpu; i++)
     vtmp[i]->state = READY;
 }

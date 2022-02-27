@@ -21,7 +21,7 @@ void vm_irq_handler() {
   u32 pirq = gic_read_irq();
   u32 virq = pirq;
 
-  gic_lr_pending(vcpu, pirq, virq, 1);
+  vgic_lr_pending(vcpu->vm->vgic, pirq, virq, 1);
 }
 
 void vm_sync_handler() {
