@@ -10,7 +10,6 @@ __attribute__((aligned(16))) char _stack[4096];
 int devintr(int iar) {
   int w;
   int irq = iar & 0x3ff;
-  uart_puts("devintr\n");
 
   switch(irq) {
     case UART_IRQ:
@@ -34,8 +33,6 @@ int devintr(int iar) {
 }
 
 void el1trap() {
-  uart_puts("el1trap!\n");
-
   int iar = gic_iar();
   if(!devintr(iar)) {
     uart_puts("sync!");

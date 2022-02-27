@@ -16,6 +16,6 @@ void gic_eoi(u32 iar, int grp);
 void gic_deactive_int(u32 irq);
 
 void gic_irq_enter(struct vgic *vgic);
-void vgic_lr_pending(struct vgic *vgic, u32 pirq, u32 virq, int grp);
+void vgic_forward_irq(struct vgic *vgic, u32 pirq, u32 virq, int grp);
 
 #endif
