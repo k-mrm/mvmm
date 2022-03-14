@@ -9,13 +9,8 @@ struct vgic {
   int used_lr[16];
 };
 
-void gic_init(void);
+void vgic_irq_enter(struct vgic *vgic);
 struct vgic *new_vgic(void);
-u32 gic_read_iar(void);
-void gic_eoi(u32 iar, int grp);
-void gic_deactive_int(u32 irq);
-
-void gic_irq_enter(struct vgic *vgic);
 void vgic_forward_irq(struct vgic *vgic, u32 pirq, u32 virq, int grp);
 
 #endif

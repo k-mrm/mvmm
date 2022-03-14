@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-#define sysreg32(op1, crn, crm, op2)  \
+#define arm_sysreg(op1, crn, crm, op2)  \
   s3_ ## op1 ## _ ## crn ## _ ## crm ## _ ## op2
 
 #define __read_sysreg(val, reg) \
