@@ -19,7 +19,7 @@ void vm_irq_handler() {
   read_sysreg(vcpu, tpidr_el2);
   struct vgic *vgic = vcpu->vm->vgic;
 
-  gic_irq_enter(vgic);
+  vgic_irq_enter(vgic);
 
   u32 iar = gic_read_iar();
   u32 pirq = iar & 0x3ff;

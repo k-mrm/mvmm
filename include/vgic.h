@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "param.h"
+#include "gic.h"
 
 struct vgic {
   int used;

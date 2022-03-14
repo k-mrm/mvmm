@@ -1,8 +1,12 @@
 #include "aarch64.h"
 #include "gic.h"
+#include "vgic.h"
 #include "log.h"
+#include "param.h"
 
 struct vgic vgics[VM_MAX];
+
+extern int gic_lr_max;
 
 static struct vgic *allocvgic() {
   for(struct vgic *vgic = vgics; vgic < &vgics[VM_MAX]; vgic++) {
@@ -29,7 +33,7 @@ static int vgic_alloc_lr(struct vgic *vgic) {
 void vgic_irq_enter(struct vgic *vgic) {
   for(int i = 0; i < gic_lr_max; i++) {
     if(vgic->used_lr[i] == 1) {
-      u64 lr = read_lr(i);
+      u64 lr = gic_read_lr(i);
       /* already handled by guest */
       if((lr & ICH_LR_STATE(LR_MASK)) == LR_INACTIVE)
         vgic->used_lr[i] = 0;
@@ -39,13 +43,13 @@ void vgic_irq_enter(struct vgic *vgic) {
 
 
 void vgic_forward_irq(struct vgic *vgic, u32 pirq, u32 virq, int grp) {
-  u64 lr = make_lr(pirq, virq, grp);
+  u64 lr = gic_make_lr(pirq, virq, grp);
 
   int n = vgic_alloc_lr(vgic);
   if(n < 0)
     panic("no lr");
 
-  write_lr(n, lr);
+  gic_write_lr(n, lr);
 }
 
 struct vgic *new_vgic() {
