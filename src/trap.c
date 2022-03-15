@@ -28,7 +28,7 @@ void vm_irq_handler() {
   // drop primary
   gic_eoi(iar, 1);
 
-  vgic_forward_irq(vcpu->vm->vgic, pirq, virq, 1);
+  vgic_forward_virq(vcpu->vm->vgic, pirq, virq, 1);
 
   // gic_deactive_int(pirq);
 }
@@ -52,18 +52,10 @@ void vm_sync_handler() {
       vcpu->reg.elr += 4;
       break;
     case 0x16:    /* hvc */
-      vmm_log("hvc ");
-      print64(iss);
-      printf("\n");
+      vmm_log("hvc %x\n", iss);
       break;
     default:
-      print64(ec);
-      printf("\n");
-      print64(iss);
-      printf("\n");
-      print64(elr);
-      printf("\n");
-      print64(far);
+      vmm_log("%x %x %x %x\n", ec, iss, elr, far);
       panic("unknown sync");
   }
 }

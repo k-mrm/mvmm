@@ -12,6 +12,6 @@ struct vgic {
 
 void vgic_irq_enter(struct vgic *vgic);
 struct vgic *new_vgic(void);
-void vgic_forward_irq(struct vgic *vgic, u32 pirq, u32 virq, int grp);
+void vgic_forward_virq(struct vgic *vgic, u32 pirq, u32 virq, int grp);
 
 #endif

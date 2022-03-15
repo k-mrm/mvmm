@@ -2,6 +2,12 @@
 #include "uart.h"
 #include "aarch64.h"
 
+#define va_list __builtin_va_list
+#define va_start(v, l)  __builtin_va_start(v, l)
+#define va_arg(v, l)  __builtin_va_arg(v, l)
+#define va_end(v) __builtin_va_end(v)
+#define va_copy(d, s) __builtin_va_copy(d, s)
+
 static void printiu32(i32 num, int base, bool sign) {
   char buf[sizeof(num) * 8 + 1] = {0};
   char *end = buf + sizeof(buf);
@@ -50,11 +56,10 @@ static void printiu64(i64 num, int base, bool sign) {
   uart_puts(cur);
 }
 
-void print64(u64 x) {
-  printiu64(x, 16, 0);
-}
+static int vprintf(const char *fmt, va_list ap) {
+  char *s;
+  void *p;
 
-static int vprintf(const char *fmt) {
   for(int i = 0; fmt[i]; i++) {
     char c = fmt[i];
     if(c == '%') {
@@ -62,16 +67,29 @@ static int vprintf(const char *fmt) {
 
       switch(c) {
         case 'd':
+          printiu32(va_arg(ap, i32), 10, true);
           break;
         case 'u':
+          printiu32(va_arg(ap, u32), 10, false);
           break;
         case 'x':
+          printiu64(va_arg(ap, u64), 16, false);
           break;
         case 'p':
+          p = va_arg(ap, void *);
+          uart_putc('0');
+          uart_putc('x');
+          printiu64((u64)p, 16, false);
           break;
         case 'c':
+          uart_putc(va_arg(ap, int));
           break;
         case 's':
+          s = va_arg(ap, char *);
+          if(!s)
+            s = "(null)";
+
+          uart_puts(s);
           break;
         case '%':
           uart_putc('%');
@@ -90,15 +108,27 @@ static int vprintf(const char *fmt) {
 }
 
 int printf(const char *fmt, ...) {
-  return vprintf(fmt);
+  va_list ap;
+  va_start(ap, fmt);
+
+  vprintf(fmt, ap);
+
+  va_end(ap);
+
+  return 0;
 }
 
-void panic(const char *fmt) {
+void panic(const char *fmt, ...) {
+  intr_disable();
+
+  va_list ap;
+  va_start(ap, fmt);
+
   printf("!!!vmm panic: ");
-  vprintf(fmt);
+  vprintf(fmt, ap);
   printf("\n");
 
-  intr_disable();
+  va_end(ap);
 
   for(;;)
     asm volatile("wfi");

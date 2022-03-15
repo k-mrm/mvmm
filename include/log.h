@@ -3,6 +3,6 @@
 
 #include "printf.h"
 
-#define vmm_log(msg)  printf("[vmmlog]: " msg)
+#define vmm_log(...)  printf("[vmm]: " __VA_ARGS__)
 
 #endif

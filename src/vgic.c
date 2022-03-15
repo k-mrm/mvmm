@@ -42,7 +42,7 @@ void vgic_irq_enter(struct vgic *vgic) {
 }
 
 
-void vgic_forward_irq(struct vgic *vgic, u32 pirq, u32 virq, int grp) {
+void vgic_forward_virq(struct vgic *vgic, u32 pirq, u32 virq, int grp) {
   u64 lr = gic_make_lr(pirq, virq, grp);
 
   int n = vgic_alloc_lr(vgic);
