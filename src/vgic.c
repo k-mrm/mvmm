@@ -41,6 +41,13 @@ void vgic_irq_enter(struct vgic *vgic) {
   }
 }
 
+int vgicd_mmio_write(struct vgic *vgic, u64 gpa, u64 x) {
+  ;
+}
+
+int vgicd_mmio_read(struct vgic *vgic, u64 gpa, u64 *x) {
+  ;
+}
 
 void vgic_forward_virq(struct vgic *vgic, u32 pirq, u32 virq, int grp) {
   u64 lr = gic_make_lr(pirq, virq, grp);

@@ -22,7 +22,9 @@ static struct vm *allocvm() {
 }
 
 void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 allocated) {
-  vmm_log("new vm\n");
+  vmm_log("new vm `%s`\n", name);
+  vmm_log("n vcpu: %d\n", ncpu);
+  vmm_log("allocated ram: %d byte\n", allocated);
 
   if(img_size > allocated)
     panic("img_size > allocated");
@@ -68,12 +70,14 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 al
 
   /* map peripheral */
   pagemap(vttbr, UARTBASE, UARTBASE, PAGESIZE, S2PTE_DEVICE);
-  pagemap(vttbr, GICDBASE, GICDBASE, 0x10000, S2PTE_DEVICE);
-  pagemap(vttbr, GICRBASE, GICRBASE, 0xf60000, S2PTE_DEVICE);
+  // pagemap(vttbr, GICDBASE, GICDBASE, 0x10000, S2PTE_DEVICE);
+  // pagemap(vttbr, GICRBASE, GICRBASE, 0xf60000, S2PTE_DEVICE);
 
   vm->vttbr = vttbr;
 
   vm->vgic = new_vgic();
+
+  vm->pmap = virtmap;
 
   for(int i = 0; i < ncpu; i++)
     vtmp[i]->state = READY;

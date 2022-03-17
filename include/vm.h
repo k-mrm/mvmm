@@ -4,11 +4,14 @@
 #include "types.h"
 #include "param.h"
 #include "vgic.h"
+#include "mmio.h"
 
 struct vm {
   char name[16];
   u64 *vttbr;
   struct vgic *vgic;
+  struct mmio_info *pmap;
+  int npmap;
   u64 entry;
   int used;
 };

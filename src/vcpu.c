@@ -55,7 +55,7 @@ void schedule() {
 
         vcpu->state = RUNNING;
 
-        vmm_log("entering vm...\n");
+        vmm_log("entering vm `%s`...\n", vcpu->vm->name);
 
         write_sysreg(vttbr_el2, vcpu->vm->vttbr);
         write_sysreg(tpidr_el2, vcpu);

@@ -28,6 +28,8 @@
 #define HCR_TWE   (1<<14)
 #define HCR_RW    (1<<31)
 
+#define HPFAR_FIPA_MASK   0xfffffffffff
+
 static inline int cpuid() {
   int mpidr;
   read_sysreg(mpidr, mpidr_el1);
