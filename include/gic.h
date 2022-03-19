@@ -3,6 +3,9 @@
 
 #include "types.h"
 
+#define GIC_NPPI     16
+#define GIC_PPI_MAX  31
+
 #define ich_hcr_el2   arm_sysreg(4, c12, c11, 0)
 #define ich_vtr_el2   arm_sysreg(4, c12, c11, 1)
 #define ich_vmcr_el2  arm_sysreg(4, c12, c11, 7)
@@ -49,6 +52,29 @@
 #define LR_ACTIVE    2L
 #define LR_MASK      3L
 
+#define GICD_CTLR           (0x0)
+#define GICD_TYPER          (0x4)
+#define GICD_IGROUPR(n)     (0x80 + (u64)(n) * 4)
+#define GICD_ISENABLER(n)   (0x100 + (u64)(n) * 4)
+#define GICD_ICENABLER(n)   (0x180 + (u64)(n) * 4)
+#define GICD_ISPENDR(n)     (0x200 + (u64)(n) * 4)
+#define GICD_ICPENDR(n)     (0x280 + (u64)(n) * 4)
+#define GICD_IPRIORITYR(n)  (0x400 + (u64)(n) * 4)
+#define GICD_ITARGETSR(n)   (0x800 + (u64)(n) * 4)
+#define GICD_ICFGR(n)       (0xc00 + (u64)(n) * 4)
+
+#define GICR_CTLR           (0x0)
+#define GICR_WAKER          (0x14)
+
+#define SGI_BASE  0x10000
+#define GICR_IGROUPR0       (SGI_BASE+0x80)
+#define GICR_ISENABLER0     (SGI_BASE+0x100)
+#define GICR_ICENABLER0     (SGI_BASE+0x180)
+#define GICR_ICPENDR0       (SGI_BASE+0x280)
+#define GICR_IPRIORITYR(n)  (SGI_BASE+0x400+(n)*4)
+#define GICR_ICFGR0         (SGI_BASE+0xc00)
+#define GICR_ICFGR1         (SGI_BASE+0xc04)
+#define GICR_IGRPMODR0      (SGI_BASE+0xd00)
 
 void gic_init(void);
 u32 gic_read_iar(void);

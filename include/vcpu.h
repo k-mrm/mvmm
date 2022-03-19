@@ -4,6 +4,7 @@
 #include "types.h"
 #include "vm.h"
 #include "param.h"
+#include "vgic.h"
 
 enum vcpu_state {
   UNUSED,
@@ -14,10 +15,6 @@ enum vcpu_state {
 };
 
 struct vcpu {
-  enum vcpu_state state;
-  const char *name;
-  struct vm *vm;
-  int cpuid;
   struct {
     u64 x[31];
     u64 spsr;
@@ -34,6 +31,12 @@ struct vcpu {
     u64 ttbr1_el1;
     u64 vbar_el1;
   } __attribute__((packed)) sys;
+
+  enum vcpu_state state;
+  const char *name;
+  struct vm *vm;
+  struct vgic_cpu *vgic;
+  int cpuid;
 };
 
 extern struct vcpu vcpus[VCPU_MAX];

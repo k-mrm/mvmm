@@ -20,9 +20,8 @@ void vm_irq_handler() {
 
   struct vcpu *vcpu;
   read_sysreg(vcpu, tpidr_el2);
-  struct vgic *vgic = vcpu->vm->vgic;
 
-  vgic_irq_enter(vgic);
+  vgic_irq_enter(vcpu);
 
   u32 iar = gic_read_iar();
   u32 pirq = iar & 0x3ff;
@@ -31,9 +30,7 @@ void vm_irq_handler() {
   // drop primary
   gic_eoi(iar, 1);
 
-  vgic_forward_virq(vcpu->vm->vgic, pirq, virq, 1);
-
-  // gic_deactive_int(pirq);
+  vgic_forward_virq(vcpu, pirq, virq, 1);
 }
 
 static u64 faulting_ipa(u64 vaddr) {
@@ -52,16 +49,18 @@ int vm_dabort_handler(struct vcpu *vcpu, u64 iss, u64 far) {
   int sas = (iss >> 22) & 0x3;
   int r = (iss >> 16) & 0x1f;
 
-  int accsize;
+  vmm_log("ipa %p\n", ipa);
+
+  enum mmio_accsize accsz;
   switch(sas) {
-    case 0: accsize = 8; break;
-    case 1: accsize = 16; break;
-    case 2: accsize = 32; break;
-    case 3: accsize = 64; break;
+    case 0: accsz = ACC_BYTE; break;
+    case 1: accsz = ACC_HALFWORD; break;
+    case 2: accsz = ACC_WORD; break;
+    case 3: accsz = ACC_DOUBLEWORD; break;
     default: panic("?");
   }
 
-  if(mmio_emulate(vcpu, r, ipa, accsize, wnr) < 0)
+  if(mmio_emulate(vcpu, r, ipa, accsz, wnr) < 0)
     return -1;
 
   return 0;
@@ -71,7 +70,7 @@ void vm_sync_handler() {
   struct vcpu *vcpu;
   read_sysreg(vcpu, tpidr_el2);
 
-  vmm_log("el0/1 sync!\n");
+  // vmm_log("el0/1 sync!\n");
 
   u64 esr, elr, far;
   read_sysreg(esr, esr_el2);
@@ -92,6 +91,7 @@ void vm_sync_handler() {
       if(vm_dabort_handler(vcpu, iss, far) < 0)
         panic("dabort %x\n", iss);
 
+      vcpu->reg.elr += 4;
       break;
     default:
       vmm_log("%x %x %x %x\n", ec, iss, elr, far);

@@ -5,13 +5,29 @@
 #include "param.h"
 #include "gic.h"
 
-struct vgic {
-  int used;
-  int used_lr[16];
+struct vcpu;
+
+struct vgic_irq {
+  u8 priority;  /* ipriorityr */
+  u8 enabled;
 };
 
-void vgic_irq_enter(struct vgic *vgic);
+struct vgic {
+  int used;
+  u32 ctlr;     /* GICD_CTLR */
+  struct vgic_irq *spis;
+};
+
+/* vgic cpu interface */
+struct vgic_cpu {
+  int used;
+  int used_lr[16];
+  struct vgic_irq ppis[GIC_NPPI];
+};
+
+void vgic_irq_enter(struct vcpu *vcpu);
 struct vgic *new_vgic(void);
-void vgic_forward_virq(struct vgic *vgic, u32 pirq, u32 virq, int grp);
+struct vgic_cpu *new_vgic_cpu(void);
+void vgic_forward_virq(struct vcpu *vcpu, u32 pirq, u32 virq, int grp);
 
 #endif

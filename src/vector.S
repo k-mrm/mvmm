@@ -1,6 +1,6 @@
 .section ".text"
 
-#define VCPU_REG_OFFSET 0x1c
+#define VCPU_REG_OFFSET 0x0
 
 .macro vm_save_reg
   stp x0, x1, [sp, #-16]!

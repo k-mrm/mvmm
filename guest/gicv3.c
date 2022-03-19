@@ -20,14 +20,6 @@ typedef _Bool bool;
 #define GICD_ITARGETSR(n)   (0x800 + (u64)(n) * 4)
 #define GICD_ICFGR(n)       (0xc00 + (u64)(n) * 4)
 
-#define GICC_CTLR   (0x0)
-#define GICC_PMR    (0x4)
-#define GICC_IAR    (0xc)
-#define GICC_EOIR   (0x10)
-#define GICC_HPPIR  (0x18)
-#define GICC_AIAR   (0x20)
-#define GICC_AEOIR  (0x24)
-
 #define GICR_CTLR           (0x0)
 #define GICR_WAKER          (0x14)
 
@@ -211,7 +203,6 @@ static void gic_enable() {
 
 void gicv3_init_percpu() {
   gic_cpu_init();
-  gic_dist_init();
   gic_redist_init(0);
 
   gic_setup_ppi(0, TIMER_IRQ, 0);
@@ -225,6 +216,8 @@ void gicv3_init() {
   for(int i = 0; i < 1; i++) {
     gicv3.rdist_addrs[i] = (char *)(GICBASE + 0xa0000 + (i) * 0x20000);
   }
+
+  gic_dist_init();
 
   gic_setup_spi(UART_IRQ, 0);
 }

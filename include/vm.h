@@ -4,8 +4,8 @@
 #include "types.h"
 #include "param.h"
 #include "vgic.h"
-#include "mmio.h"
 
+struct mmio_info;
 struct vm {
   char name[16];
   u64 *vttbr;

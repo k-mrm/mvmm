@@ -3,14 +3,18 @@
 #include "aarch64.h"
 #include "mmio.h"
 #include "memmap.h"
+#include "vcpu.h"
+
+int vgicd_mmio_read(struct vcpu *vcpu, int r, u64 offset, enum mmio_accsize accsize);
+int vgicd_mmio_write(struct vcpu *vcpu, int r, u64 offset, enum mmio_accsize accsize);
 
 struct mmio_info virtmap[] = {
-  {GICDBASE, 0x10000, NULL, NULL},
+  {GICDBASE, 0x10000, vgicd_mmio_read, vgicd_mmio_write},
   {GICRBASE, 0xf60000, NULL, NULL},
   {0,0,NULL,NULL},
 };
 
-int mmio_emulate(struct vcpu *vcpu, int reg, u64 ipa, int accsize, bool wr) {
+int mmio_emulate(struct vcpu *vcpu, int reg, u64 ipa, enum mmio_accsize accsize, bool wr) {
   struct mmio_info *map = vcpu->vm->pmap;
 
   for(struct mmio_info *m = map; m->size != 0; m++) {
@@ -23,12 +27,6 @@ int mmio_emulate(struct vcpu *vcpu, int reg, u64 ipa, int accsize, bool wr) {
         return -1;
     }
   }
-}
 
-static int mmio_read() {
-  ;
-}
-
-static int mmio_write() {
-  ;
+  return -1;
 }
