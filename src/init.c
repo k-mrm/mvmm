@@ -19,7 +19,6 @@ int vmm_init() {
   pmalloc_init();
   pcpu_init();
   gic_init();
-  vmm_log("hello\n");
 
   u64 vtcr = VTCR_T0SZ(25) | VTCR_SH0(0) | VTCR_SL0(1) | VTCR_TG0(0);
   write_sysreg(vtcr_el2, vtcr);

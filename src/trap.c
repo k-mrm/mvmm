@@ -49,7 +49,9 @@ int vm_dabort_handler(struct vcpu *vcpu, u64 iss, u64 far) {
   int sas = (iss >> 22) & 0x3;
   int r = (iss >> 16) & 0x1f;
 
-  vmm_log("ipa %p\n", ipa);
+  u64 elr;
+  read_sysreg(elr, elr_el2);
+  vmm_log("ipa %p %p %s\n", ipa, elr, wnr? "write" : "read");
 
   enum mmio_accsize accsz;
   switch(sas) {
@@ -60,7 +62,7 @@ int vm_dabort_handler(struct vcpu *vcpu, u64 iss, u64 far) {
     default: panic("?");
   }
 
-  if(mmio_emulate(vcpu, r, ipa, accsz, wnr) < 0)
+  if(mmio_emulate(vcpu, ipa, &vcpu->reg.x[r], accsz, wnr) < 0)
     return -1;
 
   return 0;

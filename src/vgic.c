@@ -64,24 +64,39 @@ static struct vgic_irq *vgic_irq(struct vcpu *vcpu, int intid) {
   return NULL;
 }
 
-int vgicd_mmio_read(struct vcpu *vcpu, int r, u64 offset, enum mmio_accsize accsize) {
+int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_accsize accsize) {
   int intid;
   struct vgic_irq *irq;
-  struct vgic_cpu *vgic = vcpu->vgic;
+  struct vgic *vgic = vcpu->vm->vgic;
 
-  printf("mmio_read %p", offset);
+  vmm_log("mmio_read %p\n", offset);
   switch(offset) {
+    case GICD_CTLR:
+      *val = vgic->ctlr;
+      return 0;
     case GICD_IPRIORITYR(0) ... GICD_IPRIORITYR(254)+3:
-      intid = (offset - GICD_IPRIORITYR(0)) / 4;
-      printf("%d,\n", intid);
-      break;
+      intid = (offset - GICD_IPRIORITYR(0));
+      vmm_log("offset %p %d,\n", offset, intid);
+      return 0;
   }
 
-  return 0;
+  return -1;
 }
 
-int vgicd_mmio_write(struct vcpu *vcpu, int r, u64 offset, enum mmio_accsize accsize) {
-  return 0;
+int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize accsize) {
+  int intid;
+  struct vgic_irq *irq;
+  struct vgic *vgic = vcpu->vm->vgic;
+
+  switch(offset) {
+    case GICD_CTLR:
+      vgic->ctlr = val;
+      return 0;
+    case GICD_IPRIORITYR(0) ... GICD_IPRIORITYR(254)+3:
+      return 0;
+  }
+
+  return -1;
 }
 
 void vgic_forward_virq(struct vcpu *vcpu, u32 pirq, u32 virq, int grp) {

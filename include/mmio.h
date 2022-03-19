@@ -19,11 +19,11 @@ enum mmio_type {
 struct mmio_info {
   u64 base;
   u64 size;
-  int (*read)(struct vcpu *, int, u64, enum mmio_accsize);
-  int (*write)(struct vcpu *, int, u64, enum mmio_accsize);
+  int (*read)(struct vcpu *, u64, u64 *, enum mmio_accsize);
+  int (*write)(struct vcpu *, u64, u64, enum mmio_accsize);
 };
 
-int mmio_emulate(struct vcpu *vcpu, int reg, u64 ipa, enum mmio_accsize accsize, bool wr);
+int mmio_emulate(struct vcpu *vcpu, u64 ipa, u64 *reg, enum mmio_accsize accsize, bool wr);
 
 extern struct mmio_info virtmap[];
 
