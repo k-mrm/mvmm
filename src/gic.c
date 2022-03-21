@@ -1,17 +1,25 @@
 #include "aarch64.h"
 #include "gic.h"
 #include "log.h"
+#include "memmap.h"
 
 /* gicv3 controller */
 
 int gic_lr_max = 0;
+
+static inline u32 gicd_r(u32 offset) {
+  return *(volatile u32 *)(GICDBASE + offset);
+}
+
+static inline void gicd_w(u32 offset, u32 val) {
+  *(volatile u32 *)(GICDBASE + offset) = val;
+}
 
 u64 gic_read_lr(int n) {
   if(gic_lr_max <= n)
     panic("lr");
 
   u64 val;
-
   switch(n) {
     case 0:   read_sysreg(val, ich_lr0_el2); break;
     case 1:   read_sysreg(val, ich_lr1_el2); break;
@@ -87,6 +95,14 @@ static int gic_max_listregs() {
   u64 i;
   read_sysreg(i, ich_vtr_el2);
   return (i & 0x1f) + 1;
+}
+
+int gic_max_spi() {
+  u32 typer = gicd_r(GICD_TYPER);
+  u32 lines = typer & 0x1f;
+  u32 max_spi = 32 * (lines + 1) - 1;
+
+  return max_spi < 1020? max_spi : 1019;
 }
 
 static void gicc_init(void) {

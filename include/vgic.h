@@ -14,8 +14,9 @@ struct vgic_irq {
 
 struct vgic {
   int used;
+  int spi_max;
   u32 ctlr;     /* GICD_CTLR */
-  struct vgic_irq *spis;
+  struct vgic_irq spis[GIC_NSPI];
 };
 
 /* vgic cpu interface */

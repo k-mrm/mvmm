@@ -69,17 +69,21 @@ int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_accsize a
   struct vgic_irq *irq;
   struct vgic *vgic = vcpu->vm->vgic;
 
-  vmm_log("mmio_read %p\n", offset);
   switch(offset) {
     case GICD_CTLR:
       *val = vgic->ctlr;
       return 0;
+    case GICD_ICPENDR(0) ... GICD_ICPENDR(31)+3:
+      return 0;
     case GICD_IPRIORITYR(0) ... GICD_IPRIORITYR(254)+3:
       intid = (offset - GICD_IPRIORITYR(0));
-      vmm_log("offset %p %d,\n", offset, intid);
+      vmm_log("ipriority offset %p %d,\n", offset, intid);
+      return 0;
+    case GICD_ITARGETSR(0) ... GICD_ITARGETSR(254)+3:
       return 0;
   }
 
+  vmm_warn("unhandled %p\n", offset);
   return -1;
 }
 
@@ -94,8 +98,11 @@ int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize a
       return 0;
     case GICD_IPRIORITYR(0) ... GICD_IPRIORITYR(254)+3:
       return 0;
+    case GICD_ITARGETSR(0) ... GICD_ITARGETSR(254)+3:
+      return 0;
   }
 
+  vmm_warn("unhandled %p\n", offset);
   return -1;
 }
 
@@ -113,6 +120,8 @@ void vgic_forward_virq(struct vcpu *vcpu, u32 pirq, u32 virq, int grp) {
 
 struct vgic *new_vgic() {
   struct vgic *vgic = allocvgic();
+  vgic->spi_max = gic_max_spi();
+  vmm_log("spi %d\n", vgic->spi_max);
 
   return vgic;
 }
@@ -125,4 +134,3 @@ struct vgic_cpu *new_vgic_cpu() {
 
   return vgic;
 }
-

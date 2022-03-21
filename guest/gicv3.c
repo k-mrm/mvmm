@@ -172,8 +172,10 @@ static void gic_cpu_init() {
 static void gic_dist_init() {
   wd32(GICD_CTLR, 0);
 
+  /*
   for(int i = 0; i < 32; i++)
     wd32(GICD_IGROUPR(i), ~0);
+    */
 }
 
 static void gic_redist_init(u32 cpuid) {
