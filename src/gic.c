@@ -7,14 +7,6 @@
 
 int gic_lr_max = 0;
 
-static inline u32 gicd_r(u32 offset) {
-  return *(volatile u32 *)(GICDBASE + offset);
-}
-
-static inline void gicd_w(u32 offset, u32 val) {
-  *(volatile u32 *)(GICDBASE + offset) = val;
-}
-
 u64 gic_read_lr(int n) {
   if(gic_lr_max <= n)
     panic("lr");

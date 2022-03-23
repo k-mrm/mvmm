@@ -9,14 +9,16 @@ struct vcpu;
 
 struct vgic_irq {
   u8 priority;  /* ipriorityr */
-  u8 enabled;
+  u8 target;
+  u8 enabled: 1;
 };
 
 struct vgic {
   int used;
   int spi_max;
+  int nspis;
   u32 ctlr;     /* GICD_CTLR */
-  struct vgic_irq spis[GIC_NSPI];
+  struct vgic_irq *spis;
 };
 
 /* vgic cpu interface */

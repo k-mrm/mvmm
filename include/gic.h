@@ -2,9 +2,15 @@
 #define MVMM_GIC_H
 
 #include "types.h"
+#include "memmap.h"
 
 #define GIC_NPPI     16
 #define GIC_PPI_MAX  31
+
+#define is_sgi(intid) (0 <= (intid) && (intid) < 16)
+#define is_ppi(intid) (16 <= (intid) && (intid) < 32)
+#define is_sgi_ppi(intid) (is_sgi(intid) || is_ppi(intid))
+#define is_spi(intid) (32 <= (intid))
 
 #define ich_hcr_el2   arm_sysreg(4, c12, c11, 0)
 #define ich_vtr_el2   arm_sysreg(4, c12, c11, 1)
@@ -76,10 +82,19 @@
 #define GICR_ICFGR1         (SGI_BASE+0xc04)
 #define GICR_IGRPMODR0      (SGI_BASE+0xd00)
 
+static inline u32 gicd_r(u32 offset) {
+  return *(volatile u32 *)(u64)(GICDBASE + offset);
+}
+
+static inline void gicd_w(u32 offset, u32 val) {
+  *(volatile u32 *)(u64)(GICDBASE + offset) = val;
+}
+
 void gic_init(void);
 u32 gic_read_iar(void);
 void gic_eoi(u32 iar, int grp);
 void gic_deactive_int(u32 irq);
+int gic_max_spi(void);
 
 u64 gic_read_lr(int n);
 void gic_write_lr(int n, u64 val);
