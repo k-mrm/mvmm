@@ -172,10 +172,15 @@ static void gic_cpu_init() {
 static void gic_dist_init() {
   wd32(GICD_CTLR, 0);
 
-  /*
-  for(int i = 0; i < 32; i++)
+  u32 typer = rd32(GICD_TYPER);
+  u32 lines = typer & 0x1f;
+
+  uart_put64(typer, 16);
+  uart_puts(" nnnnnn ");
+  uart_put64(32 * (lines + 1) - 1, 10);
+
+  for(int i = 0; i < lines; i++)
     wd32(GICD_IGROUPR(i), ~0);
-    */
 }
 
 static void gic_redist_init(u32 cpuid) {

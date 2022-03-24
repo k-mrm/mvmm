@@ -93,6 +93,7 @@ int gic_max_spi() {
   u32 typer = gicd_r(GICD_TYPER);
   u32 lines = typer & 0x1f;
   u32 max_spi = 32 * (lines + 1) - 1;
+  vmm_log("typer %p\n", typer);
 
   return max_spi < 1020? max_spi : 1019;
 }

@@ -11,6 +11,7 @@ struct vgic_irq {
   u8 priority;  /* ipriorityr */
   u8 target;
   u8 enabled: 1;
+  u8 igroup: 1;
 };
 
 struct vgic {
@@ -25,6 +26,7 @@ struct vgic {
 struct vgic_cpu {
   int used;
   int used_lr[16];
+  struct vgic_irq sgis[GIC_NSGI];
   struct vgic_irq ppis[GIC_NPPI];
 };
 

@@ -62,7 +62,9 @@ void vgic_irq_enter(struct vcpu *vcpu) {
 }
 
 static struct vgic_irq *vgic_get_irq(struct vcpu *vcpu, int intid) {
-  if(is_ppi(intid))
+  if(is_sgi(intid))
+    return &vcpu->vgic->sgis[intid];
+  else if(is_ppi(intid))
     return &vcpu->vgic->ppis[intid - 16];
   else if(is_spi(intid))
     return &vcpu->vm->vgic->spis[intid - 32];
@@ -76,12 +78,28 @@ int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_accsize a
   struct vgic_irq *irq;
   struct vgic *vgic = vcpu->vm->vgic;
 
+  if(!(accsize & ACC_WORD))
+    panic("unimplemented");
+
   switch(offset) {
     case GICD_CTLR:
       *val = vgic->ctlr;
       return 0;
     case GICD_TYPER:
-      return gicd_r(GICD_TYPER);
+      *val = gicd_r(GICD_TYPER);
+      return 0;
+    case GICD_IGROUPR(0) ... GICD_IGROUPR(31)+3: {
+      u32 igrp = 0;
+
+      intid = (offset - GICD_IGROUPR(0)) / sizeof(u32) * 32;
+      for(int i = 0; i < 32; i++) {
+        irq = vgic_get_irq(vcpu, intid+i);
+        igrp |= (u32)irq->igroup << i;
+      }
+
+      *val = igrp;
+      return 0;
+    }
     case GICD_ISENABLER(0) ... GICD_ISENABLER(31)+3: {
       u32 iser = 0;
 
@@ -137,6 +155,14 @@ int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize a
       return 0;
     case GICD_TYPER:
       goto readonly;
+    case GICD_IGROUPR(0) ... GICD_IGROUPR(31)+3: {
+      intid = (offset - GICD_IGROUPR(0)) / sizeof(u32) * 32;
+      for(int i = 0; i < 32; i++) {
+        irq = vgic_get_irq(vcpu, intid+i);
+        irq->igroup = (val >> i) & 0x1;
+      }
+      return 0;
+    }
     case GICD_ISENABLER(0) ... GICD_ISENABLER(31)+3:
       intid = (offset - GICD_ISENABLER(0)) / sizeof(u32) * 32;
       for(int i = 0; i < 32; i++) {
@@ -145,6 +171,7 @@ int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize a
       }
       return 0;
     case GICD_ICPENDR(0) ... GICD_ICPENDR(31)+3:
+      /* unimpl */
       return 0;
     case GICD_IPRIORITYR(0) ... GICD_IPRIORITYR(254)+3:
       intid = (offset - GICD_IPRIORITYR(0)) / sizeof(u32) * 4;

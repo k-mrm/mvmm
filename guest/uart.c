@@ -1,6 +1,7 @@
 #include "uart.h"
 
 typedef unsigned int u32;
+typedef unsigned long u64;
 
 #define UARTBASE    0x09000000
 
@@ -23,6 +24,18 @@ typedef unsigned int u32;
 #define INT_TX_ENABLE (1<<5)
 #define MIS   0x40
 #define ICR   0x44
+
+void uart_put64(u64 num, int base) {
+  char buf[sizeof(num) * 8 + 1] = {0};
+  char *end = buf + sizeof(buf);
+  char *cur = end - 1;
+
+  do {
+    *--cur = "0123456789abcdef"[num % base];
+  } while(num /= base);
+
+  uart_puts(cur);
+}
 
 void uart_putc(char c) {
   while(*R(FR) & FR_TXFF)

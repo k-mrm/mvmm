@@ -4,13 +4,15 @@
 #include "types.h"
 #include "memmap.h"
 
+#define GIC_NSGI     16
+#define GIC_SGI_MAX  15
 #define GIC_NPPI     16
 #define GIC_PPI_MAX  31
 
-#define is_sgi(intid) (0 <= (intid) && (intid) < 16)
-#define is_ppi(intid) (16 <= (intid) && (intid) < 32)
+#define is_sgi(intid)     (0 <= (intid) && (intid) < 16)
+#define is_ppi(intid)     (16 <= (intid) && (intid) < 32)
 #define is_sgi_ppi(intid) (is_sgi(intid) || is_ppi(intid))
-#define is_spi(intid) (32 <= (intid))
+#define is_spi(intid)     (32 <= (intid))
 
 #define ich_hcr_el2   arm_sysreg(4, c12, c11, 0)
 #define ich_vtr_el2   arm_sysreg(4, c12, c11, 1)
