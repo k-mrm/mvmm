@@ -83,6 +83,14 @@ void gic_deactive_int(u32 irq) {
   write_sysreg(icc_dir_el1, irq);
 }
 
+void gic_irq_enable(u32 irq) {
+  ;
+}
+
+void gic_irq_disable(u32 irq) {
+  ;
+}
+
 static int gic_max_listregs() {
   u64 i;
   read_sysreg(i, ich_vtr_el2);

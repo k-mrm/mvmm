@@ -30,15 +30,17 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 al
   if(img_size > allocated)
     panic("img_size > allocated");
   if(allocated % PAGESIZE != 0)
-    panic("mem align");
+    panic("invalid mem size");
+  if(ncpu >= VCPU_MAX)
+    panic("too many vcpu");
 
   struct vm *vm = allocvm();
 
   strcpy(vm->name, name);
-  struct vcpu *vtmp[ncpu];
 
   for(int i = 0; i < ncpu; i++)
-    vtmp[i] = new_vcpu(vm, i, entry);
+    vm->vcpus[i] = new_vcpu(vm, i, entry);
+  vm->nvcpu = ncpu;
 
   vm->entry = entry;
 
@@ -76,6 +78,5 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 al
   vm->vgic = new_vgic();
   vm->pmap = virtmap;
 
-  for(int i = 0; i < ncpu; i++)
-    vtmp[i]->state = READY;
+  vm->vcpus[0]->state = READY;
 }

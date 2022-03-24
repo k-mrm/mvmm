@@ -60,6 +60,10 @@
 #define LR_ACTIVE    2L
 #define LR_MASK      3L
 
+#define lr_is_inactive(lr)  (((lr >> 62) & 0x3) == LR_INACTIVE)
+#define lr_is_pending(lr)   (((lr >> 62) & 0x3) == LR_PENDING)
+#define lr_is_active(lr)    (((lr >> 62) & 0x3) == LR_ACTIVE)
+
 #define GICD_CTLR           (0x0)
 #define GICD_TYPER          (0x4)
 #define GICD_IGROUPR(n)     (0x80 + (u64)(n) * 4)
@@ -101,5 +105,8 @@ int gic_max_spi(void);
 u64 gic_read_lr(int n);
 void gic_write_lr(int n, u64 val);
 u64 gic_make_lr(u32 pirq, u32 virq, int grp);
+
+void gic_irq_enable(u32 irq);
+void gic_irq_disable(u32 irq);
 
 #endif

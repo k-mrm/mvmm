@@ -210,9 +210,9 @@ static void gic_enable() {
 
 void gicv3_init_percpu() {
   gic_cpu_init();
-  gic_redist_init(0);
+  // gic_redist_init(0);
 
-  gic_setup_ppi(0, TIMER_IRQ, 0);
+  // gic_setup_ppi(0, TIMER_IRQ, 0);
 
   gic_enable();
 }

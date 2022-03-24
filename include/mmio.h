@@ -11,11 +11,6 @@ enum mmio_accsize {
   ACC_DOUBLEWORD = 1<<3,
 };
 
-enum mmio_type {
-  PASSTHROUGH,
-  EMULATE,
-};
-
 struct mmio_info {
   u64 base;
   u64 size;

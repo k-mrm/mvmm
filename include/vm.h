@@ -6,8 +6,11 @@
 #include "vgic.h"
 
 struct mmio_info;
+struct vcpu;
 struct vm {
   char name[16];
+  int nvcpu;
+  struct vcpu *vcpus[VCPU_MAX];
   u64 *vttbr;
   struct vgic *vgic;
   struct mmio_info *pmap;

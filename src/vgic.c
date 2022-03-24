@@ -55,7 +55,7 @@ void vgic_irq_enter(struct vcpu *vcpu) {
     if(vgic->used_lr[i] == 1) {
       u64 lr = gic_read_lr(i);
       /* already handled by guest */
-      if((lr & ICH_LR_STATE(LR_MASK)) == LR_INACTIVE)
+      if(lr_is_inactive(lr))
         vgic->used_lr[i] = 0;
     }
   }
@@ -144,6 +144,14 @@ int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_accsize a
   return -1;
 }
 
+static void vgic_irq_enable(int vintid) {
+  gic_irq_enable(vintid);
+}
+
+static void vgic_irq_disable(int vintid) {
+  gic_irq_disable(vintid);
+}
+
 int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize accsize) {
   int intid;
   struct vgic_irq *irq;
@@ -167,7 +175,20 @@ int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize a
       intid = (offset - GICD_ISENABLER(0)) / sizeof(u32) * 32;
       for(int i = 0; i < 32; i++) {
         irq = vgic_get_irq(vcpu, intid+i);
-        irq->enabled = (val >> i) & 0x1;
+        if((val >> i) & 0x1) {
+          irq->enabled = 1;
+          vgic_irq_enable(intid+i);
+        }
+      }
+      return 0;
+    case GICD_ICENABLER(0) ... GICD_ICENABLER(31)+3:
+      intid = (offset - GICD_ISENABLER(0)) / sizeof(u32) * 32;
+      for(int i = 0; i < 32; i++) {
+        irq = vgic_get_irq(vcpu, intid+i);
+        if((val >> i) & 0x1) {
+          irq->enabled = 0;
+          vgic_irq_disable(intid+i);
+        }
       }
       return 0;
     case GICD_ICPENDR(0) ... GICD_ICPENDR(31)+3:
