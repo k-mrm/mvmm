@@ -58,11 +58,13 @@
 #define LR_INACTIVE  0L
 #define LR_PENDING   1L
 #define LR_ACTIVE    2L
+#define LR_PENDACT   3L
 #define LR_MASK      3L
 
 #define lr_is_inactive(lr)  (((lr >> 62) & 0x3) == LR_INACTIVE)
 #define lr_is_pending(lr)   (((lr >> 62) & 0x3) == LR_PENDING)
 #define lr_is_active(lr)    (((lr >> 62) & 0x3) == LR_ACTIVE)
+#define lr_is_pendact(lr)   (((lr >> 62) & 0x3) == LR_PENDACT)
 
 #define GICD_CTLR           (0x0)
 #define GICD_TYPER          (0x4)

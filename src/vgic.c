@@ -164,11 +164,13 @@ int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize a
     case GICD_TYPER:
       goto readonly;
     case GICD_IGROUPR(0) ... GICD_IGROUPR(31)+3: {
+      /*
       intid = (offset - GICD_IGROUPR(0)) / sizeof(u32) * 32;
       for(int i = 0; i < 32; i++) {
         irq = vgic_get_irq(vcpu, intid+i);
         irq->igroup = (val >> i) & 0x1;
       }
+      */
       return 0;
     }
     case GICD_ISENABLER(0) ... GICD_ISENABLER(31)+3:
@@ -207,6 +209,8 @@ int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize a
       for(int i = 0; i < 4; i++) {
         irq = vgic_get_irq(vcpu, intid+i);
         irq->target = (val >> (i * 8)) & 0xff;
+        printf("%d target %p\n", intid+i, irq->target);
+        gic_set_target(intid+i, irq->target);
       }
       return 0;
   }

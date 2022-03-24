@@ -84,11 +84,25 @@ void gic_deactive_int(u32 irq) {
 }
 
 void gic_irq_enable(u32 irq) {
-  ;
+  u32 is = gicd_r(GICD_ISENABLER(irq / 32));
+  is |= 1 << (irq % 32);
+  gicd_w(GICD_ISENABLER(irq / 32), is);
 }
 
 void gic_irq_disable(u32 irq) {
+  u32 is = gicd_r(GICD_ICENABLER(irq / 32));
+  is |= 1 << (irq % 32);
+  gicd_w(GICD_ICENABLER(irq / 32), is);
+}
+
+void gic_set_igroup(u32 irq, u32 igrp) {
   ;
+}
+
+void gic_set_target(u32 irq, u32 target) {
+  u32 itargetsr = gicd_r(GICD_ITARGETSR(irq / 4));
+  itargetsr &= ~((u32)0xff << (irq % 4 * 8));
+  gicd_w(GICD_ITARGETSR(irq / 4), itargetsr | (target << (irq % 4 * 8)));
 }
 
 static int gic_max_listregs() {
@@ -119,6 +133,16 @@ static void gicc_init(void) {
   isb();
 }
 
+static void gicd_init(void) {
+  u32 typer = gicd_r(GICD_TYPER);
+  u32 lines = typer & 0x1f;
+
+  for(int i = 0; i < lines; i++)
+    gicd_w(GICD_IGROUPR(i), ~0);
+
+  gicd_w(GICD_CTLR, 3);
+}
+
 static void gich_init(void) {
   write_sysreg(ich_vmcr_el2, ICH_VMCR_VENG0|ICH_VMCR_VENG1);
   write_sysreg(ich_hcr_el2, ICH_HCR_EN);
@@ -131,5 +155,6 @@ static void gich_init(void) {
 void gic_init(void) {
   vmm_log("gic init...\n");
   gicc_init();
+  gicd_init();
   gich_init();
 }
