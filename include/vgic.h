@@ -25,7 +25,7 @@ struct vgic {
 /* vgic cpu interface */
 struct vgic_cpu {
   int used;
-  int used_lr[16];
+  u16 used_lr;
   struct vgic_irq sgis[GIC_NSGI];
   struct vgic_irq ppis[GIC_NPPI];
 };

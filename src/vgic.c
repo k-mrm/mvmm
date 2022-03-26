@@ -7,6 +7,8 @@
 #include "mmio.h"
 #include "pmalloc.h"
 
+#define BIT(n)  (1<<(n))
+
 struct vgic vgics[VM_MAX];
 struct vgic_cpu vgic_cpus[VCPU_MAX];
 
@@ -38,8 +40,8 @@ static struct vgic_cpu *allocvgic_cpu() {
 
 static int vgic_cpu_alloc_lr(struct vgic_cpu *vgic) {
   for(int i = 0; i < gic_lr_max; i++) {
-    if(vgic->used_lr[i] == 0) {
-      vgic->used_lr[i] = 1;
+    if((vgic->used_lr & BIT(i)) == 0) {
+      vgic->used_lr |= BIT(i);
       return i;
     }
   }
@@ -52,11 +54,11 @@ void vgic_irq_enter(struct vcpu *vcpu) {
   struct vgic_cpu *vgic = vcpu->vgic;
 
   for(int i = 0; i < gic_lr_max; i++) {
-    if(vgic->used_lr[i] == 1) {
+    if((vgic->used_lr & BIT(i)) != 0) {
       u64 lr = gic_read_lr(i);
       /* already handled by guest */
       if(lr_is_inactive(lr))
-        vgic->used_lr[i] = 0;
+        vgic->used_lr &= ~(u16)BIT(i);
     }
   }
 }
@@ -209,7 +211,6 @@ int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize a
       for(int i = 0; i < 4; i++) {
         irq = vgic_get_irq(vcpu, intid+i);
         irq->target = (val >> (i * 8)) & 0xff;
-        printf("%d target %p\n", intid+i, irq->target);
         gic_set_target(intid+i, irq->target);
       }
       return 0;
@@ -223,6 +224,9 @@ readonly:
 }
 
 void vgic_forward_virq(struct vcpu *vcpu, u32 pirq, u32 virq, int grp) {
+  if(!(vcpu->vm->vgic->ctlr & GICD_CTLR_ENGRP(grp)))
+    return;
+
   struct vgic_cpu *vgic = vcpu->vgic;
 
   u64 lr = gic_make_lr(pirq, virq, grp);
@@ -248,8 +252,7 @@ struct vgic *new_vgic() {
 struct vgic_cpu *new_vgic_cpu() {
   struct vgic_cpu *vgic = allocvgic_cpu();
 
-  for(int i = 0; i < gic_lr_max; i++)
-    vgic->used_lr[i] = 0;
+  vgic->used_lr = 0;
 
   return vgic;
 }

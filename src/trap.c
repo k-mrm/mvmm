@@ -51,7 +51,7 @@ int vm_dabort_handler(struct vcpu *vcpu, u64 iss, u64 far) {
 
   u64 elr;
   read_sysreg(elr, elr_el2);
-  vmm_log("ipa %p %p %s\n", ipa, elr, wnr? "write" : "read");
+  vmm_log("dabort ipa %p %p %s\n", ipa, elr, wnr? "write" : "read");
 
   enum mmio_accsize accsz;
   switch(sas) {

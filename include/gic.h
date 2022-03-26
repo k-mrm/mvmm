@@ -67,6 +67,8 @@
 #define lr_is_pendact(lr)   (((lr >> 62) & 0x3) == LR_PENDACT)
 
 #define GICD_CTLR           (0x0)
+#define GICD_CTLR_ENGRP(grp)    (1<<(grp))
+
 #define GICD_TYPER          (0x4)
 #define GICD_IGROUPR(n)     (0x80 + (u64)(n) * 4)
 #define GICD_ISENABLER(n)   (0x100 + (u64)(n) * 4)
