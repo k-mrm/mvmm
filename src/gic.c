@@ -145,7 +145,7 @@ static void gicd_init(void) {
   u32 typer = gicd_r(GICD_TYPER);
   u32 lines = typer & 0x1f;
 
-  for(int i = 0; i < lines; i++)
+  for(int i = 1; i < lines; i++)
     gicd_w(GICD_IGROUPR(i), ~0);
 
   gicd_w(GICD_CTLR, 3);
@@ -158,7 +158,7 @@ static void gicr_init(int cpuid) {
 
   u32 sre;
   read_sysreg(sre, icc_sre_el2);
-  write_sysreg(icc_sre_el2, sre | 1);
+  write_sysreg(icc_sre_el2, sre | (1 << 3) | 1);
 
   gicr_w32(cpuid, GICR_IGROUPR0, ~0);
   gicr_w32(cpuid, GICR_IGRPMODR0, 0);

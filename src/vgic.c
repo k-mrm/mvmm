@@ -266,6 +266,7 @@ static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_
     case GICR_WAKER:
     case GICR_IGROUPR0:
       /* no op */
+      *val = 0;
       return 0;
     case GICR_ISENABLER0: {
       u32 iser = 0; 
@@ -295,8 +296,8 @@ static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_
     }
     case GICR_ICFGR0:
     case GICR_ICFGR1:
-      return 0;
     case GICR_IGRPMODR0:
+      *val = 0;
       return 0;
   }
 
@@ -318,6 +319,7 @@ static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_
       for(int i = 0; i < 32; i++) {
         irq = vgic_get_irq(vcpu, i);
         if((val >> i) & 0x1) {
+          vmm_log("enabled %d irq\n", i);
           irq->enabled = 1;
           vgic_irq_enable(vcpu, i);
         }
@@ -329,6 +331,7 @@ static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_
       intid = (offset - GICR_IPRIORITYR(0)) / sizeof(u32) * 4;
       for(int i = 0; i < 4; i++) {
         irq = vgic_get_irq(vcpu, intid+i);
+        vmm_log("priority change %d\n", intid+i);
         irq->priority = (val >> (i * 8)) & 0xff;
       }
       return 0;
@@ -347,7 +350,7 @@ static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_
 int vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_accsize accsize) {
   u32 ridx = offset / 0x20000;
   u32 roffset = offset % 0x20000;
-  
+
   if(ridx > vcpu->vm->nvcpu) {
     vmm_warn("invalid rdist access");
     return -1;
@@ -361,7 +364,7 @@ int vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_accsize a
 int vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize accsize) {
   u32 ridx = offset / 0x20000;
   u32 roffset = offset % 0x20000;
-  
+
   if(ridx > vcpu->vm->nvcpu) {
     vmm_warn("invalid rdist access");
     return -1;
