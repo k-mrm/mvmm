@@ -14,7 +14,7 @@ static void reload_timer(void);
 void timerinit() {
   disable_timer();
   reload_timer();
-  //enable_timer();
+  enable_timer();
 }
 
 static void enable_timer() {
@@ -34,8 +34,8 @@ static void disable_timer() {
 }
 
 static void reload_timer() {
-  // interval 100ms
-  unsigned long interval = 100000;
+  // interval 1000ms
+  unsigned long interval = 1000000;
   unsigned long f;
   read_sysreg(f, cntfrq_el0);
   unsigned long interval_clk = interval * (f / 1000000);

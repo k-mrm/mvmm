@@ -63,6 +63,48 @@ void vgic_irq_enter(struct vcpu *vcpu) {
   }
 }
 
+static void vgic_irq_enable(struct vcpu *vcpu, int vintid) {
+  if(is_sgi_ppi(vintid))
+    gic_irq_enable(vintid);
+  else if(is_spi(vintid))
+    gic_irq_enable(vintid);
+  else
+    panic("?");
+}
+
+static void vgic_irq_disable(struct vcpu *vcpu, int vintid) {
+  if(is_sgi_ppi(vintid))
+    gic_irq_disable(vintid);
+  else if(is_spi(vintid))
+    gic_irq_disable(vintid);
+  else
+    panic("?");
+}
+
+static void vgic_set_target(struct vcpu *vcpu, int vintid, u8 target) {
+  if(is_sgi_ppi(vintid))
+    return; /* ignored */
+  else if(is_spi(vintid))
+    gic_set_target(vintid, target);
+  else
+    panic("?");
+}
+
+void vgic_forward_virq(struct vcpu *vcpu, u32 pirq, u32 virq, int grp) {
+  if(!(vcpu->vm->vgic->ctlr & GICD_CTLR_ENGRP(grp)))
+    return;
+
+  struct vgic_cpu *vgic = vcpu->vgic;
+
+  u64 lr = gic_make_lr(pirq, virq, grp);
+
+  int n = vgic_cpu_alloc_lr(vgic);
+  if(n < 0)
+    panic("no lr");
+
+  gic_write_lr(n, lr);
+}
+
 static struct vgic_irq *vgic_get_irq(struct vcpu *vcpu, int intid) {
   if(is_sgi(intid))
     return &vcpu->vgic->sgis[intid];
@@ -146,14 +188,6 @@ int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_accsize a
   return -1;
 }
 
-static void vgic_irq_enable(int vintid) {
-  gic_irq_enable(vintid);
-}
-
-static void vgic_irq_disable(int vintid) {
-  gic_irq_disable(vintid);
-}
-
 int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize accsize) {
   int intid;
   struct vgic_irq *irq;
@@ -181,7 +215,7 @@ int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize a
         irq = vgic_get_irq(vcpu, intid+i);
         if((val >> i) & 0x1) {
           irq->enabled = 1;
-          vgic_irq_enable(intid+i);
+          vgic_irq_enable(vcpu, intid+i);
         }
       }
       return 0;
@@ -191,7 +225,7 @@ int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize a
         irq = vgic_get_irq(vcpu, intid+i);
         if((val >> i) & 0x1) {
           irq->enabled = 0;
-          vgic_irq_disable(intid+i);
+          vgic_irq_disable(vcpu, intid+i);
         }
       }
       return 0;
@@ -211,7 +245,7 @@ int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize a
       for(int i = 0; i < 4; i++) {
         irq = vgic_get_irq(vcpu, intid+i);
         irq->target = (val >> (i * 8)) & 0xff;
-        gic_set_target(intid+i, irq->target);
+        vgic_set_target(vcpu, intid+i, irq->target);
       }
       return 0;
   }
@@ -223,19 +257,119 @@ readonly:
   return 0;
 }
 
-void vgic_forward_virq(struct vcpu *vcpu, u32 pirq, u32 virq, int grp) {
-  if(!(vcpu->vm->vgic->ctlr & GICD_CTLR_ENGRP(grp)))
-    return;
+static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_accsize accsize) {
+  int intid;
+  struct vgic_irq *irq;
 
-  struct vgic_cpu *vgic = vcpu->vgic;
+  switch(offset) {
+    case GICR_CTLR:
+    case GICR_WAKER:
+    case GICR_IGROUPR0:
+      /* no op */
+      return 0;
+    case GICR_ISENABLER0: {
+      u32 iser = 0; 
 
-  u64 lr = gic_make_lr(pirq, virq, grp);
+      for(int i = 0; i < 32; i++) {
+        irq = vgic_get_irq(vcpu, i);
+        iser |= irq->enabled << i;
+      }
 
-  int n = vgic_cpu_alloc_lr(vgic);
-  if(n < 0)
-    panic("no lr");
+      *val = iser;
+      return 0;
+    }
+    case GICR_ICPENDR0:
+      *val = 0;
+      return 0;
+    case GICR_IPRIORITYR(0) ... GICR_IPRIORITYR(7): {
+      u32 ipr = 0;
 
-  gic_write_lr(n, lr);
+      intid = (offset - GICR_IPRIORITYR(0)) / sizeof(u32) * 4;
+      for(int i = 0; i < 4; i++) {
+        irq = vgic_get_irq(vcpu, intid+i);
+        ipr |= irq->priority << (i * 8);
+      }
+
+      *val = ipr;
+      return 0;
+    }
+    case GICR_ICFGR0:
+    case GICR_ICFGR1:
+      return 0;
+    case GICR_IGRPMODR0:
+      return 0;
+  }
+
+  vmm_warn("unhandled %p\n", offset);
+  return -1;
+}
+
+static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize accsize) {
+  int intid;
+  struct vgic_irq *irq;
+
+  switch(offset) {
+    case GICR_CTLR:
+    case GICR_WAKER:
+    case GICR_IGROUPR0:
+      /* no op */
+      return 0;
+    case GICR_ISENABLER0:
+      for(int i = 0; i < 32; i++) {
+        irq = vgic_get_irq(vcpu, i);
+        if((val >> i) & 0x1) {
+          irq->enabled = 1;
+          vgic_irq_enable(vcpu, i);
+        }
+      }
+      return 0;
+    case GICR_ICPENDR0:
+      return 0;
+    case GICR_IPRIORITYR(0) ... GICR_IPRIORITYR(7):
+      intid = (offset - GICR_IPRIORITYR(0)) / sizeof(u32) * 4;
+      for(int i = 0; i < 4; i++) {
+        irq = vgic_get_irq(vcpu, intid+i);
+        irq->priority = (val >> (i * 8)) & 0xff;
+      }
+      return 0;
+    case GICR_ICFGR0:
+    case GICR_ICFGR1:
+      return 0;
+    case GICR_IGRPMODR0:
+      /* no op */
+      return 0;
+  }
+
+  vmm_warn("unhandled %p\n", offset);
+  return -1;
+}
+
+int vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_accsize accsize) {
+  u32 ridx = offset / 0x20000;
+  u32 roffset = offset % 0x20000;
+  
+  if(ridx > vcpu->vm->nvcpu) {
+    vmm_warn("invalid rdist access");
+    return -1;
+  }
+
+  vcpu = vcpu->vm->vcpus[ridx];
+
+  return __vgicr_mmio_read(vcpu, roffset, val, accsize);
+}
+
+int vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize accsize) {
+  u32 ridx = offset / 0x20000;
+  u32 roffset = offset % 0x20000;
+  
+  if(ridx > vcpu->vm->nvcpu) {
+    vmm_warn("invalid rdist access");
+    return -1;
+  }
+
+  vcpu = vcpu->vm->vcpus[ridx];
+
+  return __vgicr_mmio_write(vcpu, roffset, val, accsize);
 }
 
 struct vgic *new_vgic() {
@@ -244,6 +378,9 @@ struct vgic *new_vgic() {
   vgic->nspis = vgic->spi_max - 31;
   vgic->ctlr = 0;
   vgic->spis = (struct vgic_irq *)pmalloc();
+  if(!vgic->spis)
+    panic("nomem");
+
   vmm_log("nspis %d sizeof nspi %d\n", vgic->nspis, sizeof(struct vgic_irq) * vgic->nspis);
 
   return vgic;

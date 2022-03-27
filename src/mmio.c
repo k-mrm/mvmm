@@ -7,10 +7,12 @@
 
 int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_accsize accsize);
 int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize accsize);
+int vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_accsize accsize);
+int vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize accsize);
 
 struct mmio_info virtmap[] = {
   {GICDBASE, 0x10000, vgicd_mmio_read, vgicd_mmio_write},
-  {GICRBASE, 0xf60000, NULL, NULL},
+  {GICRBASE, 0xf60000, vgicr_mmio_read, vgicr_mmio_write},
   {0,0,NULL,NULL},
 };
 

@@ -34,14 +34,16 @@
 #define ich_lr14_el2  arm_sysreg(4, c12, c13, 6)
 #define ich_lr15_el2  arm_sysreg(4, c12, c13, 7)
 
-#define icc_pmr_el1      arm_sysreg(0, c4, c6, 0)
-#define icc_eoir0_el1    arm_sysreg(0, c12, c8, 1)
-#define icc_dir_el1      arm_sysreg(0, c12, c11, 1)
-#define icc_iar1_el1     arm_sysreg(0, c12, c12, 0)
-#define icc_eoir1_el1    arm_sysreg(0, c12, c12, 1)
-#define icc_ctlr_el1     arm_sysreg(0, c12, c12, 4)
-#define icc_igrpen0_el1  arm_sysreg(0, c12, c12, 6)
-#define icc_igrpen1_el1  arm_sysreg(0, c12, c12, 7)
+#define icc_pmr_el1       arm_sysreg(0, c4, c6, 0)
+#define icc_eoir0_el1     arm_sysreg(0, c12, c8, 1)
+#define icc_dir_el1       arm_sysreg(0, c12, c11, 1)
+#define icc_iar1_el1      arm_sysreg(0, c12, c12, 0)
+#define icc_eoir1_el1     arm_sysreg(0, c12, c12, 1)
+#define icc_ctlr_el1      arm_sysreg(0, c12, c12, 4)
+#define icc_igrpen0_el1   arm_sysreg(0, c12, c12, 6)
+#define icc_igrpen1_el1   arm_sysreg(0, c12, c12, 7)
+
+#define icc_sre_el2       arm_sysreg(4, c12, c9, 5)
 
 #define ICC_CTLR_EOImode(m) ((m) << 1)
 
@@ -79,6 +81,8 @@
 #define GICD_ITARGETSR(n)   (0x800 + (u64)(n) * 4)
 #define GICD_ICFGR(n)       (0xc00 + (u64)(n) * 4)
 
+#define GICRBASEn(n)        (GICRBASE+(n)*0x20000)
+
 #define GICR_CTLR           (0x0)
 #define GICR_WAKER          (0x14)
 
@@ -100,11 +104,23 @@ static inline void gicd_w(u32 offset, u32 val) {
   *(volatile u32 *)(u64)(GICDBASE + offset) = val;
 }
 
+static inline u32 gicr_r32(int cpuid, u32 offset) {
+  return *(volatile u32 *)(u64)(GICRBASEn(cpuid) + offset);
+}
+
+static inline void gicr_w32(int cpuid, u32 offset, u32 val) {
+  *(volatile u32 *)(u64)(GICRBASEn(cpuid) + offset) = val;
+}
+
 void gic_init(void);
+void gic_init_cpu(int cpuid);
+
 u32 gic_read_iar(void);
 void gic_eoi(u32 iar, int grp);
 void gic_deactive_int(u32 irq);
 int gic_max_spi(void);
+
+void gic_set_target(u32 irq, u8 target);
 
 u64 gic_read_lr(int n);
 void gic_write_lr(int n, u64 val);

@@ -192,7 +192,7 @@ static void gic_redist_init(u32 cpuid) {
   wr32(cpuid, GICR_IGROUPR0, ~0);
   wr32(cpuid, GICR_IGRPMODR0, 0);
 
-  wr32(cpuid, GICR_ICFGR1, 0);
+  // wr32(cpuid, GICR_ICFGR1, 0);
 
   /* enable redist */
   u32 waker = rr32(cpuid, GICR_WAKER);
@@ -210,9 +210,9 @@ static void gic_enable() {
 
 void gicv3_init_percpu() {
   gic_cpu_init();
-  // gic_redist_init(0);
+  gic_redist_init(0);
 
-  // gic_setup_ppi(0, TIMER_IRQ, 0);
+  gic_setup_ppi(0, TIMER_IRQ, 0);
 
   gic_enable();
 }

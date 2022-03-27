@@ -95,11 +95,19 @@ void gic_irq_disable(u32 irq) {
   gicd_w(GICD_ICENABLER(irq / 32), is);
 }
 
+void gic_irq_enable_rdist(u32 irq) {
+  ;
+}
+
+void gic_irq_disable_rdist(u32 irq) {
+  ;
+}
+
 void gic_set_igroup(u32 irq, u32 igrp) {
   ;
 }
 
-void gic_set_target(u32 irq, u32 target) {
+void gic_set_target(u32 irq, u8 target) {
   u32 itargetsr = gicd_r(GICD_ITARGETSR(irq / 4));
   itargetsr &= ~((u32)0xff << (irq % 4 * 8));
   gicd_w(GICD_ITARGETSR(irq / 4), itargetsr | (target << (irq % 4 * 8)));
@@ -141,6 +149,26 @@ static void gicd_init(void) {
     gicd_w(GICD_IGROUPR(i), ~0);
 
   gicd_w(GICD_CTLR, 3);
+
+  isb();
+}
+
+static void gicr_init(int cpuid) {
+  gicr_w32(cpuid, GICR_CTLR, 0);
+
+  u32 sre;
+  read_sysreg(sre, icc_sre_el2);
+  write_sysreg(icc_sre_el2, sre | 1);
+
+  gicr_w32(cpuid, GICR_IGROUPR0, ~0);
+  gicr_w32(cpuid, GICR_IGRPMODR0, 0);
+
+  u32 waker = gicr_r32(cpuid, GICR_WAKER);
+  gicr_w32(cpuid, GICR_WAKER, waker & ~(1<<1));
+  while(gicr_r32(cpuid, GICR_WAKER) & (1<<2))
+    ;
+
+  isb();
 }
 
 static void gich_init(void) {
@@ -152,9 +180,14 @@ static void gich_init(void) {
   isb();
 }
 
+void gic_init_cpu(int cpuid) {
+  gicc_init();
+  gicr_init(cpuid);
+  gich_init();
+}
+
 void gic_init(void) {
   vmm_log("gic init...\n");
-  gicc_init();
+
   gicd_init();
-  gich_init();
 }
