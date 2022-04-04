@@ -83,6 +83,12 @@ void gic_deactive_int(u32 irq) {
   write_sysreg(icc_dir_el1, irq);
 }
 
+void gic_irq_enable_redist(u32 cpuid, u32 irq) {
+  u32 is = gicr_r32(cpuid, GICR_ISENABLER0);
+  is |= 1 << (irq % 32);
+  gicr_w32(cpuid, GICR_ISENABLER0, is);
+}
+
 void gic_irq_enable(u32 irq) {
   u32 is = gicd_r(GICD_ISENABLER(irq / 32));
   is |= 1 << (irq % 32);
@@ -93,14 +99,6 @@ void gic_irq_disable(u32 irq) {
   u32 is = gicd_r(GICD_ICENABLER(irq / 32));
   is |= 1 << (irq % 32);
   gicd_w(GICD_ICENABLER(irq / 32), is);
-}
-
-void gic_irq_enable_rdist(u32 irq) {
-  ;
-}
-
-void gic_irq_disable_rdist(u32 irq) {
-  ;
 }
 
 void gic_set_igroup(u32 irq, u32 igrp) {
@@ -145,7 +143,7 @@ static void gicd_init(void) {
   u32 typer = gicd_r(GICD_TYPER);
   u32 lines = typer & 0x1f;
 
-  for(int i = 1; i < lines; i++)
+  for(int i = 0; i < lines; i++)
     gicd_w(GICD_IGROUPR(i), ~0);
 
   gicd_w(GICD_CTLR, 3);
@@ -160,6 +158,11 @@ static void gicr_init(int cpuid) {
   read_sysreg(sre, icc_sre_el2);
   write_sysreg(icc_sre_el2, sre | (1 << 3) | 1);
 
+  isb();
+
+  read_sysreg(sre, icc_sre_el1);
+  write_sysreg(icc_sre_el1, sre | 1);
+
   gicr_w32(cpuid, GICR_IGROUPR0, ~0);
   gicr_w32(cpuid, GICR_IGRPMODR0, 0);
 
@@ -172,7 +175,7 @@ static void gicr_init(int cpuid) {
 }
 
 static void gich_init(void) {
-  write_sysreg(ich_vmcr_el2, ICH_VMCR_VENG0|ICH_VMCR_VENG1);
+  write_sysreg(ich_vmcr_el2, ICH_VMCR_VENG1);
   write_sysreg(ich_hcr_el2, ICH_HCR_EN);
 
   gic_lr_max = gic_max_listregs();

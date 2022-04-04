@@ -65,7 +65,7 @@ void vgic_irq_enter(struct vcpu *vcpu) {
 
 static void vgic_irq_enable(struct vcpu *vcpu, int vintid) {
   if(is_sgi_ppi(vintid))
-    gic_irq_enable(vintid);
+    gic_irq_enable_redist(0, vintid);
   else if(is_spi(vintid))
     gic_irq_enable(vintid);
   else
@@ -157,6 +157,8 @@ int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_accsize a
       return 0;
     }
     case GICD_ICPENDR(0) ... GICD_ICPENDR(31)+3:
+      /* unimpl */
+      *val = 0;
       return 0;
     case GICD_IPRIORITYR(0) ... GICD_IPRIORITYR(254)+3: {
       u32 ipr = 0;
@@ -279,6 +281,10 @@ static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_
       *val = iser;
       return 0;
     }
+    case GICR_ICENABLER0:
+      /* TODO */
+      *val = 0;
+      return 0;
     case GICR_ICPENDR0:
       *val = 0;
       return 0;
@@ -325,7 +331,10 @@ static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_
         }
       }
       return 0;
+    case GICR_ICENABLER0:
     case GICR_ICPENDR0:
+      /* TODO */
+      return 0;
       return 0;
     case GICR_IPRIORITYR(0) ... GICR_IPRIORITYR(7):
       intid = (offset - GICR_IPRIORITYR(0)) / sizeof(u32) * 4;
@@ -337,7 +346,6 @@ static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_
       return 0;
     case GICR_ICFGR0:
     case GICR_ICFGR1:
-      return 0;
     case GICR_IGRPMODR0:
       /* no op */
       return 0;

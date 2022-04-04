@@ -40,6 +40,7 @@
 #define icc_iar1_el1      arm_sysreg(0, c12, c12, 0)
 #define icc_eoir1_el1     arm_sysreg(0, c12, c12, 1)
 #define icc_ctlr_el1      arm_sysreg(0, c12, c12, 4)
+#define icc_sre_el1       arm_sysreg(0, c12, c12, 5)
 #define icc_igrpen0_el1   arm_sysreg(0, c12, c12, 6)
 #define icc_igrpen1_el1   arm_sysreg(0, c12, c12, 7)
 
@@ -128,5 +129,6 @@ u64 gic_make_lr(u32 pirq, u32 virq, int grp);
 
 void gic_irq_enable(u32 irq);
 void gic_irq_disable(u32 irq);
+void gic_irq_enable_redist(u32 cpuid, u32 irq);
 
 #endif

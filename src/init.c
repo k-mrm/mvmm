@@ -7,6 +7,7 @@
 #include "mm.h"
 #include "log.h"
 #include "vgic.h"
+#include "vtimer.h"
 
 extern struct guest hello;
 void vectable();
@@ -20,6 +21,7 @@ int vmm_init() {
   pcpu_init();
   gic_init();
   gic_init_cpu(0);
+  vtimer_init();
 
   u64 vtcr = VTCR_T0SZ(25) | VTCR_SH0(0) | VTCR_SL0(1) | VTCR_TG0(0);
   write_sysreg(vtcr_el2, vtcr);
