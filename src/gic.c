@@ -89,6 +89,12 @@ void gic_irq_enable_redist(u32 cpuid, u32 irq) {
   gicr_w32(cpuid, GICR_ISENABLER0, is);
 }
 
+void gic_irq_disable_redist(u32 cpuid, u32 irq) {
+  u32 is = gicr_r32(cpuid, GICR_ICENABLER0);
+  is |= 1 << (irq % 32);
+  gicr_w32(cpuid, GICR_ICENABLER0, is);
+}
+
 void gic_irq_enable(u32 irq) {
   u32 is = gicd_r(GICD_ISENABLER(irq / 32));
   is |= 1 << (irq % 32);

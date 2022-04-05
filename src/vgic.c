@@ -397,10 +397,20 @@ struct vgic *new_vgic() {
   return vgic;
 }
 
-struct vgic_cpu *new_vgic_cpu() {
+struct vgic_cpu *new_vgic_cpu(int vcpuid) {
   struct vgic_cpu *vgic = allocvgic_cpu();
 
   vgic->used_lr = 0;
+
+  for(struct vgic_irq *v = vgic->sgis; v < &vgic->sgis[GIC_NSGI]; v++) {
+    v->enabled = 1;
+    v->target = 1 << vcpuid;
+  }
+
+  for(struct vgic_irq *v = vgic->ppis; v < &vgic->ppis[GIC_NPPI]; v++) {
+    v->enabled = 0;
+    v->target = 1 << vcpuid;
+  }
 
   return vgic;
 }

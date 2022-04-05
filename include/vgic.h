@@ -32,7 +32,7 @@ struct vgic_cpu {
 
 void vgic_irq_enter(struct vcpu *vcpu);
 struct vgic *new_vgic(void);
-struct vgic_cpu *new_vgic_cpu(void);
+struct vgic_cpu *new_vgic_cpu(int vcpuid);
 void vgic_forward_virq(struct vcpu *vcpu, u32 pirq, u32 virq, int grp);
 
 #endif

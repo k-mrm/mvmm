@@ -30,7 +30,7 @@ struct vcpu *new_vcpu(struct vm *vm, int vcpuid, u64 entry) {
   vcpu->vm = vm;
   vcpu->cpuid = vcpuid;
 
-  vcpu->vgic = new_vgic_cpu();
+  vcpu->vgic = new_vgic_cpu(vcpuid);
 
   vcpu->reg.spsr = 0x3c5;   /* EL1 */
   vcpu->reg.elr = entry;
