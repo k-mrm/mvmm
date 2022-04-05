@@ -34,8 +34,11 @@ struct vcpu *new_vcpu(struct vm *vm, int vcpuid, u64 entry) {
 
   vcpu->reg.spsr = 0x3c5;   /* EL1 */
   vcpu->reg.elr = entry;
+
   vcpu->sys.mpidr_el1 = vcpuid; /* TODO: affinity */
   vcpu->sys.midr_el1 = 0x410fd081;  /* cortex-a72 */
+  vcpu->sys.sctlr_el1 = 0xc50838;
+  vcpu->sys.cntfrq_el0 = 62500000;
 
   return vcpu;
 }
@@ -47,6 +50,15 @@ void free_vcpu(struct vcpu *vcpu) {
 }
 
 void trapret(void);
+
+void switch_vcpu(struct pcpu *pcpu, struct vcpu *vcpu) {
+  write_sysreg(vttbr_el2, vcpu->vm->vttbr);
+  write_sysreg(tpidr_el2, vcpu);
+  restore_sysreg(vcpu);
+
+  trapret();
+}
+
 void schedule() {
   struct pcpu *pcpu = cur_pcpu();
 
@@ -59,11 +71,7 @@ void schedule() {
 
         vmm_log("entering vm `%s`...\n", vcpu->vm->name);
 
-        write_sysreg(vttbr_el2, vcpu->vm->vttbr);
-        write_sysreg(tpidr_el2, vcpu);
-        restore_sysreg(vcpu);
-
-        trapret();
+        switch_vcpu(pcpu, vcpu);
 
         pcpu->vcpu = NULL;
         write_sysreg(tpidr_el2, 0);
@@ -82,6 +90,7 @@ static void save_sysreg(struct vcpu *vcpu) {
   read_sysreg(vcpu->sys.ttbr0_el1, ttbr0_el1);
   read_sysreg(vcpu->sys.ttbr1_el1, ttbr1_el1);
   read_sysreg(vcpu->sys.vbar_el1, vbar_el1);
+  read_sysreg(vcpu->sys.sctlr_el1, sctlr_el1);
 }
 
 static void restore_sysreg(struct vcpu *vcpu) {
@@ -94,4 +103,8 @@ static void restore_sysreg(struct vcpu *vcpu) {
   write_sysreg(ttbr0_el1, vcpu->sys.ttbr0_el1);
   write_sysreg(ttbr1_el1, vcpu->sys.ttbr1_el1);
   write_sysreg(vbar_el1, vcpu->sys.vbar_el1);
+  write_sysreg(sctlr_el1, vcpu->sys.sctlr_el1);
+  write_sysreg(cntv_ctl_el0, vcpu->sys.cntv_ctl_el0);
+  write_sysreg(cntv_tval_el0, vcpu->sys.cntv_tval_el0);
+  write_sysreg(cntfrq_el0, vcpu->sys.cntfrq_el0);
 }

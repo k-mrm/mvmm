@@ -12,6 +12,11 @@ static void disable_timer(void);
 static void reload_timer(void);
 
 void timerinit() {
+  unsigned long f;
+  read_sysreg(f, cntfrq_el0);
+  uart_puts("\nfreq: ");
+  uart_put64(f, 10);
+
   disable_timer();
   reload_timer();
   enable_timer();

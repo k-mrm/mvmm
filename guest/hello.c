@@ -49,9 +49,13 @@ int main(void) {
   timerinit();
   write_sysreg(vbar_el1, (unsigned long)vectable);
 
-  intr_enable();
+  unsigned int sctlr;
+  read_sysreg(sctlr, sctlr_el1);
+  uart_puts("\n");
+  uart_put64(sctlr, 16);
 
-  uart_puts("sayonara\n");
+  intr_enable();
+  uart_puts("\nintr\n");
 
   for(;;)
     intr_enable();

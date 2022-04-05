@@ -19,7 +19,7 @@ struct vcpu {
     u64 x[31];
     u64 spsr;
     u64 elr;
-  } __attribute__((packed)) reg;
+  } reg;
   struct {
     u64 spsr_el1;
     u64 elr_el1;
@@ -30,7 +30,11 @@ struct vcpu {
     u64 ttbr0_el1;
     u64 ttbr1_el1;
     u64 vbar_el1;
-  } __attribute__((packed)) sys;
+    u64 sctlr_el1;
+    u64 cntv_ctl_el0;
+    u64 cntv_tval_el0;
+    u64 cntfrq_el0;
+  } sys;
 
   enum vcpu_state state;
   const char *name;
