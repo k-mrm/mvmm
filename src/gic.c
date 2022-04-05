@@ -3,6 +3,8 @@
 #include "log.h"
 #include "memmap.h"
 
+#define __fallthrough __attribute__((fallthrough))
+
 /* gicv3 controller */
 
 int gic_lr_max = 0;
@@ -57,6 +59,27 @@ void gic_write_lr(int n, u64 val) {
     case 14:  write_sysreg(ich_lr14_el2, val); break;
     case 15:  write_sysreg(ich_lr15_el2, val); break;
     default:  panic("?");
+  }
+}
+
+void gic_restore_lr(struct gic_state *gic) {
+  switch(gic_lr_max-1) {
+    case 15:  write_sysreg(ich_lr15_el2, gic->lr[15]); __fallthrough;
+    case 14:  write_sysreg(ich_lr14_el2, gic->lr[14]); __fallthrough;
+    case 13:  write_sysreg(ich_lr13_el2, gic->lr[13]); __fallthrough;
+    case 12:  write_sysreg(ich_lr12_el2, gic->lr[12]); __fallthrough;
+    case 11:  write_sysreg(ich_lr11_el2, gic->lr[11]); __fallthrough;
+    case 10:  write_sysreg(ich_lr10_el2, gic->lr[10]); __fallthrough;
+    case 9:   write_sysreg(ich_lr9_el2, gic->lr[9]); __fallthrough;
+    case 8:   write_sysreg(ich_lr8_el2, gic->lr[8]); __fallthrough;
+    case 7:   write_sysreg(ich_lr7_el2, gic->lr[7]); __fallthrough;
+    case 6:   write_sysreg(ich_lr6_el2, gic->lr[6]); __fallthrough;
+    case 5:   write_sysreg(ich_lr5_el2, gic->lr[5]); __fallthrough;
+    case 4:   write_sysreg(ich_lr4_el2, gic->lr[4]); __fallthrough;
+    case 3:   write_sysreg(ich_lr3_el2, gic->lr[3]); __fallthrough;
+    case 2:   write_sysreg(ich_lr2_el2, gic->lr[2]); __fallthrough;
+    case 1:   write_sysreg(ich_lr1_el2, gic->lr[1]); __fallthrough;
+    case 0:   write_sysreg(ich_lr0_el2, gic->lr[0]);
   }
 }
 
@@ -115,6 +138,24 @@ void gic_set_target(u32 irq, u8 target) {
   u32 itargetsr = gicd_r(GICD_ITARGETSR(irq / 4));
   itargetsr &= ~((u32)0xff << (irq % 4 * 8));
   gicd_w(GICD_ITARGETSR(irq / 4), itargetsr | (target << (irq % 4 * 8)));
+}
+
+void gic_init_state(struct gic_state *gic) {
+  read_sysreg(gic->vmcr, ich_vmcr_el2);
+}
+
+void gic_restore_state(struct gic_state *gic) {
+  write_sysreg(ich_vmcr_el2, gic->vmcr);
+
+  u32 sre;
+  read_sysreg(sre, icc_sre_el1);
+  write_sysreg(icc_sre_el1, sre | gic->sre_el1);
+
+  gic_restore_lr(gic);
+}
+
+void gic_save_state(struct gic_state *gic) {
+  ;
 }
 
 static int gic_max_listregs() {

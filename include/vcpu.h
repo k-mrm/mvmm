@@ -5,6 +5,7 @@
 #include "vm.h"
 #include "param.h"
 #include "vgic.h"
+#include "gic.h"
 
 enum vcpu_state {
   UNUSED,
@@ -35,6 +36,8 @@ struct vcpu {
     u64 cntv_tval_el0;
     u64 cntfrq_el0;
   } sys;
+
+  struct gic_state gic;
 
   enum vcpu_state state;
   const char *name;

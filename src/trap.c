@@ -8,6 +8,15 @@
 #include "mmio.h"
 
 void hyp_sync_handler() {
+  u64 esr, elr, far;
+  read_sysreg(esr, esr_el2);
+  read_sysreg(elr, elr_el2);
+  read_sysreg(far, far_el2);
+  u64 ec = (esr >> 26) & 0x3f;
+  u64 iss = esr & 0x1ffffff;
+
+  vmm_log("%x %x %x %x\n", ec, iss, elr, far);
+
   panic("sync el2");
 }
 

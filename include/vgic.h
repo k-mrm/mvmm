@@ -34,5 +34,6 @@ void vgic_irq_enter(struct vcpu *vcpu);
 struct vgic *new_vgic(void);
 struct vgic_cpu *new_vgic_cpu(int vcpuid);
 void vgic_forward_virq(struct vcpu *vcpu, u32 pirq, u32 virq, int grp);
+void vgic_restore_state(struct vgic_cpu *vgic);
 
 #endif

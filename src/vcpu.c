@@ -40,6 +40,8 @@ struct vcpu *new_vcpu(struct vm *vm, int vcpuid, u64 entry) {
   vcpu->sys.sctlr_el1 = 0xc50838;
   vcpu->sys.cntfrq_el0 = 62500000;
 
+  gic_init_state(&vcpu->gic);
+
   return vcpu;
 }
 
@@ -51,12 +53,18 @@ void free_vcpu(struct vcpu *vcpu) {
 
 void trapret(void);
 
-void switch_vcpu(struct pcpu *pcpu, struct vcpu *vcpu) {
+static void switch_vcpu(struct pcpu *pcpu, struct vcpu *vcpu) {
   write_sysreg(vttbr_el2, vcpu->vm->vttbr);
   write_sysreg(tpidr_el2, vcpu);
+
   restore_sysreg(vcpu);
 
+  gic_restore_state(&vcpu->gic);
+
+  /* enter vm */
   trapret();
+
+  /* now unreachable */
 }
 
 void schedule() {
@@ -69,10 +77,11 @@ void schedule() {
 
         vcpu->state = RUNNING;
 
-        vmm_log("entering vm `%s`...\n", vcpu->vm->name);
+        vmm_log("cpu%d: entering vm `%s`\n", pcpu->cpuid, vcpu->vm->name);
 
         switch_vcpu(pcpu, vcpu);
 
+        pcpu->last = vcpu;
         pcpu->vcpu = NULL;
         write_sysreg(tpidr_el2, 0);
       }

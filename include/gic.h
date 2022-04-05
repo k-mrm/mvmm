@@ -113,6 +113,12 @@ static inline void gicr_w32(int cpuid, u32 offset, u32 val) {
   *(volatile u32 *)(u64)(GICRBASEn(cpuid) + offset) = val;
 }
 
+struct gic_state {
+  u64 lr[16];
+  u64 vmcr;
+  u32 sre_el1;
+};
+
 void gic_init(void);
 void gic_init_cpu(int cpuid);
 
@@ -130,5 +136,8 @@ u64 gic_make_lr(u32 pirq, u32 virq, int grp);
 void gic_irq_enable(u32 irq);
 void gic_irq_disable(u32 irq);
 void gic_irq_enable_redist(u32 cpuid, u32 irq);
+
+void gic_restore_state(struct gic_state *gic);
+void gic_init_state(struct gic_state *gic);
 
 #endif
