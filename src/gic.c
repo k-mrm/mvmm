@@ -62,7 +62,7 @@ void gic_write_lr(int n, u64 val) {
   }
 }
 
-void gic_restore_lr(struct gic_state *gic) {
+static void gic_restore_lr(struct gic_state *gic) {
   switch(gic_lr_max-1) {
     case 15:  write_sysreg(ich_lr15_el2, gic->lr[15]); __fallthrough;
     case 14:  write_sysreg(ich_lr14_el2, gic->lr[14]); __fallthrough;
@@ -80,6 +80,27 @@ void gic_restore_lr(struct gic_state *gic) {
     case 2:   write_sysreg(ich_lr2_el2, gic->lr[2]); __fallthrough;
     case 1:   write_sysreg(ich_lr1_el2, gic->lr[1]); __fallthrough;
     case 0:   write_sysreg(ich_lr0_el2, gic->lr[0]);
+  }
+}
+
+static void gic_save_lr(struct gic_state *gic) {
+  switch(gic_lr_max-1) {
+    case 15:  read_sysreg(gic->lr[15], ich_lr15_el2); __fallthrough;
+    case 14:  read_sysreg(gic->lr[14], ich_lr14_el2); __fallthrough;
+    case 13:  read_sysreg(gic->lr[13], ich_lr13_el2); __fallthrough;
+    case 12:  read_sysreg(gic->lr[12], ich_lr12_el2); __fallthrough;
+    case 11:  read_sysreg(gic->lr[11], ich_lr11_el2); __fallthrough;
+    case 10:  read_sysreg(gic->lr[10], ich_lr10_el2); __fallthrough;
+    case 9:   read_sysreg(gic->lr[9], ich_lr9_el2); __fallthrough;
+    case 8:   read_sysreg(gic->lr[8], ich_lr8_el2); __fallthrough;
+    case 7:   read_sysreg(gic->lr[7], ich_lr7_el2); __fallthrough;
+    case 6:   read_sysreg(gic->lr[6], ich_lr6_el2); __fallthrough;
+    case 5:   read_sysreg(gic->lr[5], ich_lr5_el2); __fallthrough;
+    case 4:   read_sysreg(gic->lr[4], ich_lr4_el2); __fallthrough;
+    case 3:   read_sysreg(gic->lr[3], ich_lr3_el2); __fallthrough;
+    case 2:   read_sysreg(gic->lr[2], ich_lr2_el2); __fallthrough;
+    case 1:   read_sysreg(gic->lr[1], ich_lr1_el2); __fallthrough;
+    case 0:   read_sysreg(gic->lr[0], ich_lr0_el2);
   }
 }
 
@@ -155,7 +176,10 @@ void gic_restore_state(struct gic_state *gic) {
 }
 
 void gic_save_state(struct gic_state *gic) {
-  ;
+  read_sysreg(gic->vmcr, ich_vmcr_el2);
+  read_sysreg(gic->sre_el1, icc_sre_el1);
+
+  gic_save_lr(gic);
 }
 
 static int gic_max_listregs() {

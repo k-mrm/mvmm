@@ -30,6 +30,7 @@ struct vcpu {
     u64 sp_el1;
     u64 ttbr0_el1;
     u64 ttbr1_el1;
+    u64 tcr_el1;
     u64 vbar_el1;
     u64 sctlr_el1;
     u64 cntv_ctl_el0;
@@ -42,6 +43,7 @@ struct vcpu {
   enum vcpu_state state;
   const char *name;
   struct vm *vm;
+  struct vcpu *next;  /* ready queue */
   struct vgic_cpu *vgic;
   int cpuid;
 };
@@ -50,6 +52,9 @@ extern struct vcpu vcpus[VCPU_MAX];
 
 struct vcpu *new_vcpu(struct vm *vm, int vcpuid, u64 entry);
 void free_vcpu(struct vcpu *vcpu);
-void schedule(void) __attribute__((noreturn));
+
+void vcpu_ready(struct vcpu *vcpu);
+
+void enter_vcpu(void);
 
 #endif

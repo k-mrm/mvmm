@@ -55,7 +55,6 @@ void trapret(void);
 
 static void switch_vcpu(struct pcpu *pcpu, struct vcpu *vcpu) {
   write_sysreg(vttbr_el2, vcpu->vm->vttbr);
-  write_sysreg(tpidr_el2, vcpu);
 
   restore_sysreg(vcpu);
 
@@ -67,6 +66,47 @@ static void switch_vcpu(struct pcpu *pcpu, struct vcpu *vcpu) {
   /* now unreachable */
 }
 
+void vcpu_ready(struct vcpu *vcpu) {
+  struct pcpu *pcpu = cur_pcpu();
+
+  vcpu->state = READY;
+
+  struct vcpu **v = &pcpu->ready;
+  while(*v)
+    v = &(*v)->next;
+
+  *v = vcpu;
+}
+
+struct vcpu *schedule() {
+  struct pcpu *pcpu = cur_pcpu();
+
+  if(!pcpu->ready)
+    return NULL;
+
+  struct vcpu *vcpu = pcpu->ready;
+  pcpu->ready = vcpu->next;
+  vcpu->next = NULL;
+
+  return vcpu;
+}
+
+void enter_vcpu() {
+  struct vcpu *vcpu = schedule();
+
+  cur_pcpu()->vcpu = vcpu;
+  write_sysreg(tpidr_el2, vcpu);
+  vcpu->state = RUNNING;
+
+  write_sysreg(vttbr_el2, vcpu->vm->vttbr);
+  restore_sysreg(vcpu);
+  gic_restore_state(&vcpu->gic);
+
+  /* enter vm */
+  trapret();
+}
+
+/*
 void schedule() {
   struct pcpu *pcpu = cur_pcpu();
 
@@ -74,7 +114,7 @@ void schedule() {
     for(struct vcpu *vcpu = vcpus; vcpu < &vcpus[VCPU_MAX]; vcpu++) {
       if(vcpu->state == READY) {
         pcpu->vcpu = vcpu;
-
+        write_sysreg(tpidr_el2, vcpu);
         vcpu->state = RUNNING;
 
         vmm_log("cpu%d: entering vm `%s`\n", pcpu->cpuid, vcpu->vm->name);
@@ -88,18 +128,30 @@ void schedule() {
     }
   }
 }
+*/
+
+/* vcpu gives up pcpu */
+void yield() {
+  struct pcpu *p = cur_pcpu();
+  struct vcpu *v = p->vcpu;
+
+  vcpu_ready(v);
+}
 
 static void save_sysreg(struct vcpu *vcpu) {
   read_sysreg(vcpu->sys.spsr_el1, spsr_el1);
   read_sysreg(vcpu->sys.elr_el1, elr_el1);
-  read_sysreg(vcpu->sys.mpidr_el1, mpidr_el1);
-  read_sysreg(vcpu->sys.midr_el1, midr_el1);
+  // read_sysreg(vcpu->sys.mpidr_el1, mpidr_el1);
+  // read_sysreg(vcpu->sys.midr_el1, midr_el1);
   read_sysreg(vcpu->sys.sp_el0, sp_el0);
   read_sysreg(vcpu->sys.sp_el1, sp_el1);
   read_sysreg(vcpu->sys.ttbr0_el1, ttbr0_el1);
   read_sysreg(vcpu->sys.ttbr1_el1, ttbr1_el1);
+  read_sysreg(vcpu->sys.tcr_el1, tcr_el1);
   read_sysreg(vcpu->sys.vbar_el1, vbar_el1);
   read_sysreg(vcpu->sys.sctlr_el1, sctlr_el1);
+  read_sysreg(vcpu->sys.cntv_ctl_el0, cntv_ctl_el0);
+  read_sysreg(vcpu->sys.cntv_tval_el0, cntv_tval_el0);
 }
 
 static void restore_sysreg(struct vcpu *vcpu) {
@@ -111,6 +163,7 @@ static void restore_sysreg(struct vcpu *vcpu) {
   write_sysreg(sp_el1, vcpu->sys.sp_el1);
   write_sysreg(ttbr0_el1, vcpu->sys.ttbr0_el1);
   write_sysreg(ttbr1_el1, vcpu->sys.ttbr1_el1);
+  write_sysreg(tcr_el1, vcpu->sys.tcr_el1);
   write_sysreg(vbar_el1, vcpu->sys.vbar_el1);
   write_sysreg(sctlr_el1, vcpu->sys.sctlr_el1);
   write_sysreg(cntv_ctl_el0, vcpu->sys.cntv_ctl_el0);

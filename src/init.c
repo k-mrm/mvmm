@@ -41,5 +41,5 @@ int vmm_init() {
 
   new_vm("hello", 1, hello.start, hello.size, 0x40000000, 256*1024);
 
-  schedule();
+  enter_vcpu();
 }
