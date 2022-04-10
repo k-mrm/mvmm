@@ -33,6 +33,7 @@ void hyp_irq_handler() {
      */
     case 1023:
       vmm_warn("sprious interrupt");
+      break;
     default:
       break;
   }
