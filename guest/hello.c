@@ -56,9 +56,15 @@ int main(void) {
 
   intr_enable();
   uart_puts("\nintr\n");
+  int i = 0;
 
-  for(;;)
-    intr_enable();
+  for(;;) {
+    /*
+    for(int j = 0; j < 1000; i++, j++)
+      uart_put64(i, 10);
+    asm volatile ("hvc #10");
+    */
+  }
 
   return 0x199999;
 }

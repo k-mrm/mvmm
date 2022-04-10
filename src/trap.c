@@ -21,7 +21,23 @@ void hyp_sync_handler() {
 }
 
 void hyp_irq_handler() {
-  panic("irq el2");
+  vmm_log("irq el2\n");
+
+  u32 iar = gic_read_iar();
+  u32 irq = iar & 0x3ff;
+
+  switch(irq) {
+    /*
+     * case interrupt id:
+     *   interrupt_handler();
+     */
+    case 1023:
+      vmm_warn("sprious interrupt");
+    default:
+      break;
+  }
+
+  gic_eoi(iar, 1);
 }
 
 void vm_irq_handler() {

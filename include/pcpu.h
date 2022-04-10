@@ -8,7 +8,6 @@
 struct pcpu {
   int cpuid;
   struct vcpu *vcpu;  /* current vcpu */
-  struct vcpu *last;  /* last vcpu */
   struct vcpu *ready;
 };
 
