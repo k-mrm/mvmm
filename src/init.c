@@ -37,13 +37,12 @@ int vmm_init() {
 
   isb();
 
-  intr_enable();
-
   // new_vm("hello", 1, hello.start, hello.size, 0x40000000, 256*1024);
   // new_vm("hello", 1, hello.start, hello.size, 0x40000000, 256*1024);
 
   // enter_vcpu();
 
-  for(;;)
-    ;
+  for(;;) {
+    intr_enable();
+  }
 }

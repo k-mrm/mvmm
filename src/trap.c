@@ -22,8 +22,6 @@ void hyp_sync_handler() {
 
 void uartintr(void);
 void hyp_irq_handler() {
-  vmm_log("irq el2\n");
-
   u32 iar = gic_read_iar();
   u32 irq = iar & 0x3ff;
 
@@ -43,6 +41,9 @@ void hyp_irq_handler() {
   }
 
   gic_eoi(iar, 1);
+  gic_deactive_int(iar);
+
+  vmm_log("irq el2\n");
 }
 
 void vm_irq_handler() {
