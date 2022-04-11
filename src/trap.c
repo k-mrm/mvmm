@@ -20,6 +20,7 @@ void hyp_sync_handler() {
   panic("sync el2");
 }
 
+void uartintr(void);
 void hyp_irq_handler() {
   vmm_log("irq el2\n");
 
@@ -31,9 +32,12 @@ void hyp_irq_handler() {
      * case interrupt id:
      *   interrupt_handler();
      */
+    case 33:
+      uartintr();
+      break;
     case 1023:
       vmm_warn("sprious interrupt");
-      break;
+      return;
     default:
       break;
   }

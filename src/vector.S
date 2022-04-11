@@ -105,7 +105,9 @@ el2_sync:
   bl hyp_sync_handler
 
 el2_irq:
-  b .
+  bl hyp_irq_handler
+
+  eret
 
 el1_sync:
   vm_save_reg

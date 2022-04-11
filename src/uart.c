@@ -19,6 +19,7 @@
 #define IMSC  0x38
 #define INT_RX_ENABLE (1<<4)
 #define INT_TX_ENABLE (1<<5)
+#define MIS   0x40
 #define ICR   0x44
 
 void uart_putc(char c) {
@@ -40,9 +41,25 @@ int uart_getc() {
     return *R(DR);
 }
 
+void uartintr() {
+  int status = *R(MIS);
+
+  if(status & INT_RX_ENABLE) {
+    for(;;) {
+      int c = uart_getc();
+      if(c < 0)
+        break;
+      uart_puts("hyp uartintr\n");
+    }
+  }
+
+  *R(ICR) = (1<<4);
+}
+
 void uart_init() {
   *R(CR) = 0;
   *R(IMSC) = 0;
   *R(LCRH) = LCRH_FEN | LCRH_WLEN_8BIT;
   *R(CR) = 0x301;   /* RXE, TXE, UARTEN */
+  *R(IMSC) = (1<<4);
 }
