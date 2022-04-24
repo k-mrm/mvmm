@@ -25,7 +25,7 @@ OBJS = src/boot.o src/init.o src/uart.o src/lib.o src/pmalloc.o src/printf.o src
 
 QEMUOPTS = -cpu $(QCPU) -machine $(MACHINE) -smp $(NCPU) -m 256
 QEMUOPTS += -global virtio-mmio.force-legacy=false
-QEMUOPTS += -device virtio-rng-pci
+QEMUOPTS += -device virtio-rng-pci,bus=pcie.0
 QEMUOPTS += -nographic -kernel mvmm
 
 %.o: %.c
