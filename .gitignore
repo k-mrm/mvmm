@@ -2,6 +2,7 @@
 *.d
 *.elf
 *.img
+*.dts
 
 mvmm
 guest/hello

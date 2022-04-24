@@ -21,10 +21,11 @@ endif
 
 OBJS = src/boot.o src/init.o src/uart.o src/lib.o src/pmalloc.o src/printf.o src/vcpu.o \
 			 src/vm.o src/mm.o src/vector.o src/guest.o src/trap.o src/pcpu.o src/vgic.o \
-			 src/gic.o src/mmio.o src/vtimer.o
+			 src/gic.o src/mmio.o src/vtimer.o src/pci.o
 
 QEMUOPTS = -cpu $(QCPU) -machine $(MACHINE) -smp $(NCPU) -m 256
 QEMUOPTS += -global virtio-mmio.force-legacy=false
+QEMUOPTS += -device virtio-rng-pci
 QEMUOPTS += -nographic -kernel mvmm
 
 %.o: %.c
@@ -47,6 +48,11 @@ qemu: mvmm
 
 gdb: mvmm
 	$(QEMU) -S -gdb tcp::1234 $(QEMUOPTS)
+
+dts:
+	$(QEMU) -S -cpu $(QCPU) -machine $(MACHINE),dumpdtb=virt.dtb -smp $(NCPU) -nographic
+	dtc -I dtb -O dts -o virt.dts virt.dtb
+	$(RM) virt.dtb
 
 clean:
 	make -C guest clean

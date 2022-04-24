@@ -5,6 +5,8 @@
 #define GICDBASE    0x08000000
 #define GICRBASE    0x080a0000
 
+#define PCIE_ECAM_BASE  0x10000000
+
 #define VMMBASE     0x40000000
 
 #define PHYSIZE     (256*1024*1024)     /* 256 MB */

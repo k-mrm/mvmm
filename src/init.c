@@ -37,12 +37,14 @@ int vmm_init() {
 
   isb();
 
-  // new_vm("hello", 1, hello.start, hello.size, 0x40000000, 256*1024);
-  // new_vm("hello", 1, hello.start, hello.size, 0x40000000, 256*1024);
+  pcie_init();
 
-  // enter_vcpu();
+  // new_vm("hello", 1, hello.start, hello.size, 0x40000000, 256*1024);
+  new_vm("hello", 1, hello.start, hello.size, 0x40000000, 256*1024);
+
+  enter_vcpu();
 
   for(;;) {
-    intr_enable();
+    ;
   }
 }
