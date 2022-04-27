@@ -14,18 +14,19 @@ LDFLAGS = -nostdlib -nostartfiles
 QEMUPREFIX = 
 QEMU = $(QEMUPREFIX)qemu-system-aarch64
 GIC_VERSION = 3
-MACHINE = virt,gic-version=$(GIC_VERSION),virtualization=on
+MACHINE = virt,gic-version=$(GIC_VERSION),virtualization=on,its=on
 ifndef NCPU
 NCPU = 1
 endif
 
 OBJS = src/boot.o src/init.o src/uart.o src/lib.o src/pmalloc.o src/printf.o src/vcpu.o \
 			 src/vm.o src/mm.o src/vector.o src/guest.o src/trap.o src/pcpu.o src/vgic.o \
-			 src/gic.o src/mmio.o src/vtimer.o src/pci.o
+			 src/gic.o src/mmio.o src/vtimer.o src/pci.o src/virtio-pci.o
 
 QEMUOPTS = -cpu $(QCPU) -machine $(MACHINE) -smp $(NCPU) -m 256
-QEMUOPTS += -global virtio-mmio.force-legacy=false
-QEMUOPTS += -device virtio-rng-pci,bus=pcie.0
+#QEMUOPTS += -device ioh3420,id=pcie.1
+QEMUOPTS += -device virtio-rng-pci,bus=pcie.0,disable-legacy=on,disable-modern=off
+QEMUOPTS += -device virtio-net-pci,bus=pcie.0,disable-legacy=on,disable-modern=off
 QEMUOPTS += -nographic -kernel mvmm
 
 %.o: %.c

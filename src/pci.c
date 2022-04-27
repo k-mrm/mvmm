@@ -19,8 +19,15 @@ static void pcie_scan_dev() {
 
         vmm_log("pcie find: %d\n", cfg->vendor_id);
 
-        if(cfg->vendor_id == 6900) {
+        /* VIRTIO vendor id */
+        if(cfg->vendor_id == 0x1af4) {
           vmm_log("\tvirtio %d sub:%d\n", cfg->device_id, cfg->subsystem_id);
+          vmm_log("\theader %d, cap->ptr %d\n", cfg->header_type, cfg->cap_ptr);
+          vmm_log("\tcommand %p status %p\n", cfg->command, cfg->status);
+
+          cfg->command |= (1<<0) | (1<<1) | (1<<2);
+          vmm_log("\tcommand %x\n", cfg->command);
+          virtio_pci_dev_init(cfg);
         }
       }
 }
