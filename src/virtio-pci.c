@@ -32,21 +32,35 @@ static void virtio_rng_init() {
 
 void virtio_cap_scan(struct pci_config *cfg, struct virtio_pcie_cap *cap) {
   if(cap->cap_vndr != 0x9)
-    panic("virtio-pci invalid vendor");
+    vmm_warn("virtio-pci invalid vendor %p", cap->cap_vndr);
 
-  vmm_log("cap vndr %d next %d\n", cap->cap_vndr, cap->cap_next);
+  vmm_log("cap vndr %p next %p\n", cap->cap_vndr, cap->cap_next);
 
   switch(cap->cfg_type) {
-    case VIRTIO_PCI_CAP_COMMON_CFG:
-      vmm_log("\t%d %p %p\n", cap->bar, cap->offset, cfg->bar[cap->bar]);
+    case VIRTIO_PCI_CAP_COMMON_CFG: {
+      u32 oldv = cfg->bar[cap->bar];
+      cfg->bar[cap->bar] = 0xffffffff;
+      u32 rv = cfg->bar[cap->bar];
+      vmm_log("\t%d %p %p %p\n", cap->bar, cap->offset, rv, oldv);
       vmm_log("\tcap length: %p\n", cap->length);
 
-      u64 addr = cfg->bar[cap->bar] & ~(0xf);
+      u64 addr = oldv & 0xfffffff0;
+      u64 tag = oldv & 0xf;
+      u64 size = ~(rv & 0xfffffff0)+1;
+      cfg->bar[cap->bar] = oldv;
+      vmm_log("addr %p-%p\n", addr, addr+size-1);
+
+      if(addr == 0) {
+        addr = 0x10000000;
+        cfg->bar[cap->bar] = addr | tag;
+      }
+
       struct virtio_pci_common_cfg *vtcfg = (struct virtio_pci_common_cfg *)addr;
 
-      vmm_log("queue size %x %d %d\n", vtcfg->device_feature, vtcfg->num_queues, vtcfg->queue_enable);
+      vmm_log("common cfg %d %d %p\n", vtcfg->num_queues, vtcfg->queue_enable, vtcfg->device_status);
 
       break;
+    }
   }
 
   if(cap->cap_next) {
@@ -59,20 +73,18 @@ int virtio_pci_dev_init(struct pci_config *cfg) {
   if(cfg->device_id < 0x1040)
     return -1;
 
-  vmm_log("dev id %p revision id %d\n", cfg->device_id, cfg->revision_id);
-
-  for(int i = 0; i < 0x100; i++) {
-    printf("%x ", ((char *)cfg)[i]);
-    if((i+1) % 0x10 == 0)
-      printf("\n");
-  }
+  vmm_log("dev id %p revision id %p\n", cfg->device_id, cfg->revision_id);
 
   struct virtio_pcie_cap *cap = (struct virtio_pcie_cap *)((char *)cfg + cfg->cap_ptr);
 
-  virtio_cap_scan(cfg, cap);
-
   switch(cfg->device_id - 0x1040) {
     case 1:
+          for(int i = 0; i < 0x100; i++) {
+            printf("%x ", ((char *)cfg)[i]);
+            if((i+1) % 0x10 == 0)
+              printf("\n");
+          }
+      virtio_cap_scan(cfg, cap);
       virtio_net_init();
       break;
     case 4:

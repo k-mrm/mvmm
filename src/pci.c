@@ -6,7 +6,7 @@ struct pci_config_space {
   u8 raw[256][32][8][4096];
 };
 
-static void pcie_scan_dev() {
+static void pcie_scan_bus() {
   struct pci_config *cfg;
   struct pci_config_space *space = (struct pci_config_space *)PCIE_ECAM_BASE;
 
@@ -17,21 +17,28 @@ static void pcie_scan_dev() {
         if(cfg->vendor_id == 0xffff)
           continue;
 
-        vmm_log("pcie find: %d\n", cfg->vendor_id);
+        vmm_log("pcie find: %d(%p)\n", cfg->vendor_id, cfg->vendor_id);
 
         /* VIRTIO vendor id */
         if(cfg->vendor_id == 0x1af4) {
           vmm_log("\tvirtio %d sub:%d\n", cfg->device_id, cfg->subsystem_id);
-          vmm_log("\theader %d, cap->ptr %d\n", cfg->header_type, cfg->cap_ptr);
+          vmm_log("\theader %d, cap->ptr %p\n", cfg->header_type, cfg->cap_ptr);
           vmm_log("\tcommand %p status %p\n", cfg->command, cfg->status);
 
           cfg->command |= (1<<0) | (1<<1) | (1<<2);
           vmm_log("\tcommand %x\n", cfg->command);
           virtio_pci_dev_init(cfg);
+        } else if(cfg->vendor_id == 0x8086) {
+          vmm_log("\te1000? %d sub:%d\n", cfg->device_id, cfg->subsystem_id);
+          vmm_log("\theader %d, cap->ptr %p\n", cfg->header_type, cfg->cap_ptr);
+          vmm_log("\tcommand %p status %p\n", cfg->command, cfg->status);
+
+          cfg->command |= (1<<0) | (1<<1) | (1<<2);
+
         }
       }
 }
 
 void pcie_init() {
-  pcie_scan_dev();
+  pcie_scan_bus();
 }

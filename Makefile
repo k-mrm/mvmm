@@ -10,8 +10,7 @@ CFLAGS = -Wall -Og -g -MD -ffreestanding -nostdinc -nostdlib -nostartfiles -mcpu
 CFLAGS += -I ./include/
 LDFLAGS = -nostdlib -nostartfiles
 
-#QEMUPREFIX = ~/qemu/build/
-QEMUPREFIX = 
+QEMUPREFIX = ~/qemu/build/
 QEMU = $(QEMUPREFIX)qemu-system-aarch64
 GIC_VERSION = 3
 MACHINE = virt,gic-version=$(GIC_VERSION),virtualization=on,its=on
@@ -24,9 +23,12 @@ OBJS = src/boot.o src/init.o src/uart.o src/lib.o src/pmalloc.o src/printf.o src
 			 src/gic.o src/mmio.o src/vtimer.o src/pci.o src/virtio-pci.o
 
 QEMUOPTS = -cpu $(QCPU) -machine $(MACHINE) -smp $(NCPU) -m 256
-#QEMUOPTS += -device ioh3420,id=pcie.1
-QEMUOPTS += -device virtio-rng-pci,bus=pcie.0,disable-legacy=on,disable-modern=off
+#QEMUOPTS += -device ioh3420,id=pcie.1,bus=pcie.0,chassis=1,slot=1
+#QEMUOPTS += -device pcie-root-port,port=0x10,chassis=1,id=pcie.1,bus=pcie.0,multifunction=on,addr=0x2
+#QEMUOPTS += -device pcie-root-port,port=0x11,chassis=2,id=pcie.2,bus=pcie.0,addr=0x2.0x1
 QEMUOPTS += -device virtio-net-pci,bus=pcie.0,disable-legacy=on,disable-modern=off
+QEMUOPTS += -device virtio-rng-pci,bus=pcie.0,disable-legacy=on,disable-modern=off
+QEMUOPTS += -device e1000,bus=pcie.0
 QEMUOPTS += -nographic -kernel mvmm
 
 %.o: %.c
