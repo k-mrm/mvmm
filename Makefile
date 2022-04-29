@@ -28,7 +28,7 @@ QEMUOPTS = -cpu $(QCPU) -machine $(MACHINE) -smp $(NCPU) -m 256
 #QEMUOPTS += -device pcie-root-port,port=0x11,chassis=2,id=pcie.2,bus=pcie.0,addr=0x2.0x1
 QEMUOPTS += -device virtio-net-pci,bus=pcie.0,disable-legacy=on,disable-modern=off
 QEMUOPTS += -device virtio-rng-pci,bus=pcie.0,disable-legacy=on,disable-modern=off
-QEMUOPTS += -device e1000,bus=pcie.0
+#QEMUOPTS += -device e1000,bus=pcie.0
 QEMUOPTS += -nographic -kernel mvmm
 
 %.o: %.c

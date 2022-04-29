@@ -4,6 +4,13 @@
 #include "aarch64.h"
 #include "types.h"
 
+#define PCI_BAR_TYPE(bar)             ((bar) & 1)
+#define PCI_BAR_TYPE_MEM              0
+#define PCI_BAR_TYPE_IO               1
+#define PCI_BAR_MEM_TYPE(bar)         (((bar)>>1) & 3)
+#define PCI_BAR_MEM_TYPE_64           0x2
+#define PCI_BAR_MEM_PREFETCHABLE(bar) (((bar)>>3) & 1)
+
 struct pci_config {
   u16 vendor_id;
   u16 device_id;
@@ -36,6 +43,15 @@ struct pcie_cap {
   u8 next_cap;
   u16 cap_reg;
   u32 dev_cap;
+};
+
+struct pci_func {
+  struct pci_config *cfg;
+  u8 bus;
+  u8 device;
+  u8 func;
+  u64 reg_addr[6];
+  u32 reg_size[6];
 };
 
 #endif

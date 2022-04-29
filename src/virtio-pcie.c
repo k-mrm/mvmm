@@ -39,26 +39,10 @@ void virtio_cap_scan(struct pci_config *cfg, struct virtio_pcie_cap *cap) {
 
   switch(cap->cfg_type) {
     case VIRTIO_PCI_CAP_COMMON_CFG: {
-      u32 oldv = cfg->bar[cap->bar];
-      cfg->bar[cap->bar] = 0xffffffff;
-      u32 rv = cfg->bar[cap->bar];
-      vmm_log("\t%d %p %p %p\n", cap->bar, cap->offset, rv, oldv);
+      vmm_log("\t%d %p\n", cap->bar, cap->offset);
       vmm_log("\tcap length: %p\n", cap->length);
 
-      u64 addr = oldv & 0xfffffff0;
-      u64 tag = oldv & 0xf;
-      u64 size = ~(rv & 0xfffffff0)+1;
-      cfg->bar[cap->bar] = oldv;
-      vmm_log("addr %p-%p\n", addr, addr+size-1);
-
-      if(addr == 0) {
-        addr = 0x10000000;
-        cfg->bar[cap->bar] = addr | tag;
-      }
-
-      struct virtio_pci_common_cfg *vtcfg = (struct virtio_pci_common_cfg *)addr;
-
-      vmm_log("common cfg %d %d %p\n", vtcfg->num_queues, vtcfg->queue_enable, vtcfg->device_status);
+      // vmm_log("common cfg %d %d %p\n", vtcfg->num_queues, vtcfg->queue_enable, vtcfg->device_status);
 
       break;
     }
