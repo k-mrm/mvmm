@@ -31,7 +31,7 @@ static void virtio_rng_init() {
   vmm_log("virtio_rng_init\n");
 }
 
-void virtio_cap_scan(struct pci_config *cfg, struct virtio_pcie_cap *cap) {
+void virtio_cap_scan(struct pci_func *f, struct virtio_pcie_cap *cap) {
   if(cap->cap_vndr != 0x9)
     vmm_warn("virtio-pci invalid vendor %p", cap->cap_vndr);
 
@@ -39,35 +39,35 @@ void virtio_cap_scan(struct pci_config *cfg, struct virtio_pcie_cap *cap) {
 
   switch(cap->cfg_type) {
     case VIRTIO_PCI_CAP_COMMON_CFG: {
-      vmm_log("\t%d %p\n", cap->bar, cap->offset);
-      vmm_log("\tcap length: %p\n", cap->length);
+      u64 addr = f->reg_addr[cap->bar];
+      struct virtio_pci_common_cfg *vtcfg = (struct virtio_pci_common_cfg *)addr;
 
-      // vmm_log("common cfg %d %d %p\n", vtcfg->num_queues, vtcfg->queue_enable, vtcfg->device_status);
+      vmm_log("vtcfg %p %d %d %p\n", vtcfg, vtcfg->num_queues, vtcfg->queue_enable, vtcfg->device_status);
 
       break;
     }
   }
 
   if(cap->cap_next) {
-    cap = (struct virtio_pcie_cap *)((char *)cfg + cap->cap_next);
-    virtio_cap_scan(cfg, cap);
+    cap = (struct virtio_pcie_cap *)((char *)(f->cfg) + cap->cap_next);
+    virtio_cap_scan(f, cap);
   }
 }
 
-int virtio_pci_dev_init(struct pci_config *cfg) {
+int virtio_pci_dev_init(struct pci_func *f) {
+  struct pci_config *cfg = f->cfg;
+
   if(cfg->device_id < 0x1040)
     return -1;
-
-  vmm_log("dev id %p revision id %p\n", cfg->device_id, cfg->revision_id);
 
   struct virtio_pcie_cap *cap = (struct virtio_pcie_cap *)((char *)cfg + cfg->cap_ptr);
 
   switch(cfg->device_id - 0x1040) {
     case 1:
-      virtio_cap_scan(cfg, cap);
       virtio_net_init();
       break;
     case 4:
+      virtio_cap_scan(f, cap);
       virtio_rng_init();
       break;
     default:

@@ -7,12 +7,16 @@ struct pci_config_space {
 };
 
 static int pci_baseaddr_map(u32 size, bool mem64, u64 *addr) {
-  static u64 pci_mmio_base = 0x10000000;
-  if(pci_mmio_base > 0x3eff0000)
-    return -1;
+  static u64 pci_mmio_base32 = 0x10000000;
+  static u64 pci_mmio_base64 = 0x8000000000;
 
-  *addr = pci_mmio_base;
-  pci_mmio_base += size;
+  if(mem64) {
+    *addr = pci_mmio_base64;
+    pci_mmio_base64 += size;
+  } else {
+    *addr = pci_mmio_base32;
+    pci_mmio_base32 += size;
+  }
 
   return 0;
 }
@@ -27,7 +31,7 @@ static void pci_func_enable(struct pci_func *f) {
   /* only header_type 0 */
   for(int i = 0; i < 6; i++) {
     bool mem64 = false;
-    u32 oldv = cfg->bar[i];
+    u64 oldv = cfg->bar[i];
     cfg->bar[i] = 0xffffffff;
     isb();
     u32 rv = cfg->bar[i];
@@ -45,7 +49,7 @@ static void pci_func_enable(struct pci_func *f) {
       if(addr == 0) {
         if(pci_baseaddr_map(size, mem64, &addr) < 0)
           panic("pci");
-        oldv |= addr;
+        oldv = addr | (oldv & 0xf);
       }
 
       f->reg_addr[i] = addr;
@@ -56,9 +60,12 @@ static void pci_func_enable(struct pci_func *f) {
       /* TODO */
     }
 
-    cfg->bar[i] = oldv;
-    if(mem64)
-      i++;
+    if(mem64) {
+      cfg->bar[i] = oldv & 0xffffffff;
+      cfg->bar[++i] = (oldv >> 32) & 0xffffffff;
+    } else {
+      cfg->bar[i] = oldv;
+    }
   }
 }
 
@@ -85,7 +92,7 @@ static void pcie_scan_bus() {
 
         /* VIRTIO vendor id */
         if(cfg->vendor_id == 0x1af4) {
-          virtio_pci_dev_init(cfg);
+          virtio_pci_dev_init(&f);
         }
       }
 }
