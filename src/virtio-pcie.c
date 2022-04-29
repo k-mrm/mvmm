@@ -1,4 +1,5 @@
-#include "pci.h"
+#include "pcie.h"
+#include "virtio-pcie.h"
 #include "log.h"
 
 struct virtio_pci_common_cfg {
@@ -79,11 +80,6 @@ int virtio_pci_dev_init(struct pci_config *cfg) {
 
   switch(cfg->device_id - 0x1040) {
     case 1:
-          for(int i = 0; i < 0x100; i++) {
-            printf("%x ", ((char *)cfg)[i]);
-            if((i+1) % 0x10 == 0)
-              printf("\n");
-          }
       virtio_cap_scan(cfg, cap);
       virtio_net_init();
       break;

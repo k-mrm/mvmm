@@ -1,5 +1,5 @@
 #include "memmap.h"
-#include "pci.h"
+#include "pcie.h"
 #include "log.h"
 
 struct pci_config_space {
@@ -34,7 +34,6 @@ static void pcie_scan_bus() {
           vmm_log("\tcommand %p status %p\n", cfg->command, cfg->status);
 
           cfg->command |= (1<<0) | (1<<1) | (1<<2);
-
         }
       }
 }
