@@ -31,7 +31,7 @@ static void virtio_rng_init() {
   vmm_log("virtio_rng_init\n");
 }
 
-void virtio_cap_scan(struct pci_func *f, struct virtio_pcie_cap *cap) {
+static void __virtio_cap_scan(struct pci_func *f, struct virtio_pcie_cap *cap) {
   if(cap->cap_vndr != 0x9)
     vmm_warn("virtio-pci invalid vendor %p", cap->cap_vndr);
 
@@ -50,8 +50,16 @@ void virtio_cap_scan(struct pci_func *f, struct virtio_pcie_cap *cap) {
 
   if(cap->cap_next) {
     cap = (struct virtio_pcie_cap *)((char *)(f->cfg) + cap->cap_next);
-    virtio_cap_scan(f, cap);
+    __virtio_cap_scan(f, cap);
   }
+}
+
+static void virtio_cap_scan(struct pci_func *f) {
+  struct pci_config *cfg = f->cfg;
+
+  struct virtio_pcie_cap *cap = (struct virtio_pcie_cap *)((char *)cfg + cfg->cap_ptr);
+
+  __virtio_cap_scan(f, cap);
 }
 
 int virtio_pci_dev_init(struct pci_func *f) {
@@ -60,14 +68,13 @@ int virtio_pci_dev_init(struct pci_func *f) {
   if(cfg->device_id < 0x1040)
     return -1;
 
-  struct virtio_pcie_cap *cap = (struct virtio_pcie_cap *)((char *)cfg + cfg->cap_ptr);
 
   switch(cfg->device_id - 0x1040) {
     case 1:
       virtio_net_init();
       break;
     case 4:
-      virtio_cap_scan(f, cap);
+      virtio_cap_scan(f);
       virtio_rng_init();
       break;
     default:
