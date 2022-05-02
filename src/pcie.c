@@ -21,10 +21,13 @@ static int pci_baseaddr_map(u32 size, bool mem64, u64 *addr) {
   return 0;
 }
 
-static void pci_func_enable(struct pci_func *f) {
-  struct pci_config *cfg = f->cfg;
+static void pci_func_enable(struct pci_dev *dev) {
+  struct pci_config *cfg = dev->cfg;
 
-  vmm_log("PCI %x:%x.%x enable(%x:%x)\n", f->bus, f->device, f->func, cfg->vendor_id, cfg->device_id);
+  dev->vndr_id = cfg->vendor_id;
+  dev->dev_id = cfg->device_id;
+
+  vmm_log("PCI %x:%x.%x enable(%x:%x)\n", dev->bus, dev->device, dev->func, dev->vndr_id, dev->dev_id);
 
   cfg->command |= (1 << 0) | (1 << 1) | (1 << 2);
 
@@ -52,8 +55,8 @@ static void pci_func_enable(struct pci_func *f) {
         oldv = addr | (oldv & 0xf);
       }
 
-      f->reg_addr[i] = addr;
-      f->reg_size[i] = size;
+      dev->reg_addr[i] = addr;
+      dev->reg_size[i] = size;
 
       vmm_log("happy typhoon %p %p %dbit\n", addr, size, mem64? 64 : 32);
     } else {  // PCI_BAR_TYPE(oldv) == PCI_BAR_TYPE_IO
@@ -70,7 +73,7 @@ static void pci_func_enable(struct pci_func *f) {
 }
 
 static void pcie_scan_bus() {
-  struct pci_func f;
+  struct pci_dev dev;
   struct pci_config *cfg;
   struct pci_config_space *space = (struct pci_config_space *)PCIE_ECAM_BASE;
 
@@ -83,16 +86,16 @@ static void pcie_scan_bus() {
         if(cfg->header_type != 0) /* unsupport */
           continue;
 
-        f.bus = bc;
-        f.device = dc;
-        f.func = fc;
-        f.cfg = cfg;
+        dev.bus = bc;
+        dev.device = dc;
+        dev.func = fc;
+        dev.cfg = cfg;
         
-        pci_func_enable(&f);
+        pci_func_enable(&dev);
 
         /* VIRTIO vendor id */
-        if(cfg->vendor_id == 0x1af4) {
-          virtio_pci_dev_init(&f);
+        if(dev.vndr_id == 0x1af4) {
+          virtio_pci_dev_init(&dev);
         }
       }
 }

@@ -45,11 +45,13 @@ struct pcie_cap {
   u32 dev_cap;
 };
 
-struct pci_func {
+struct pci_dev {
   struct pci_config *cfg;
   u8 bus;
   u8 device;
   u8 func;
+  u16 vndr_id;
+  u16 dev_id;
   u64 reg_addr[6];
   u32 reg_size[6];
 };
