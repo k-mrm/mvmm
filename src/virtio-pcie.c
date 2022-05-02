@@ -1,9 +1,71 @@
 #include "pcie.h"
 #include "virtio-pcie.h"
 #include "log.h"
+#include "pmalloc.h"
 
-static void virtio_net_init() {
+static void desc_init(struct virtq *vq) {
+  for(int i = 0; i < NQUEUE; i++) {
+    if(i != NQUEUE - 1) {
+      vq->desc[i].flags = VIRTQ_DESC_F_NEXT;
+      vq->desc[i].next = i + 1;
+    }
+  }
+}
+
+static void virtq_init(struct virtq *vq) {
+  vq->desc = pmalloc();
+  vq->avail = pmalloc();
+  vq->used = pmalloc();
+
+  vq->nfree = NQUEUE;
+
+  desc_init(vq);
+}
+
+static int virtio_net_init(struct virtio_pci_dev *vdev) {
   vmm_log("virtio_net_init\n");
+  return -1;
+}
+
+static int virtio_rng_init(struct virtio_pci_dev *vdev) {
+  vmm_log("virtio_rng_init\n");
+  struct virtio_pci_common_cfg *vtcfg = vdev->vtcfg;
+
+  vtcfg->device_status = 0;
+
+  u8 status = DEV_STATUS_ACKNOWLEDGE;
+  vtcfg->device_status = status;
+  isb();
+
+  status |= DEV_STATUS_DRIVER;
+  vtcfg->device_status = status;
+  isb();
+
+  vtcfg->device_feature_select = 0;
+  vtcfg->driver_feature_select = 0;
+
+  status |= DEV_STATUS_FEATURES_OK;
+  vtcfg->device_status = status;
+  isb();
+
+  virtq_init(&vdev->virtq);
+
+  vtcfg->queue_select = 0;
+  vtcfg->queue_size = 1; 
+
+  vtcfg->queue_desc = (u64)vdev->virtq.desc;
+  vtcfg->queue_driver = (u64)vdev->virtq.avail;
+  vtcfg->queue_device = (u64)vdev->virtq.used;
+  isb();
+
+  vtcfg->queue_enable = 1;
+  isb();
+
+  status |= DEV_STATUS_DRIVER_OK;
+  vtcfg->device_status = status;
+  isb();
+
+  return -1;
 }
 
 static void __virtio_scan_cap(struct virtio_pci_dev *vdev, struct virtio_pci_cap *cap) {
@@ -46,10 +108,6 @@ static void virtio_scan_cap(struct virtio_pci_dev *vdev) {
   __virtio_scan_cap(vdev, cap);
 }
 
-static void virtio_rng_init() {
-  vmm_log("virtio_rng_init\n");
-}
-
 int virtio_pci_dev_init(struct pci_dev *pci_dev) {
   if(pci_dev->dev_id < 0x1040)
     return -1;
@@ -63,7 +121,7 @@ int virtio_pci_dev_init(struct pci_dev *pci_dev) {
       virtio_net_init(&vdev);
       break;
     case 4:
-      virtio_rng_init();
+      virtio_rng_init(&vdev);
       break;
     default:
       return -1;
