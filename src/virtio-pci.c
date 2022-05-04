@@ -128,7 +128,7 @@ static int virtio_rng_init(struct virtio_pci_dev *vdev) {
   vtcfg->device_status = status;
   isb();
 
-  if(!(status & DEV_STATUS_DRIVER_OK))
+  if(!(vtcfg->device_status & DEV_STATUS_DRIVER_OK))
     return -1;
 
   return 0;
