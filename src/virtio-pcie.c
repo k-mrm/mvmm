@@ -2,6 +2,7 @@
 #include "virtio-pcie.h"
 #include "log.h"
 #include "pmalloc.h"
+#include "lib.h"
 
 static void desc_init(struct virtq *vq) {
   for(int i = 0; i < NQUEUE; i++) {
@@ -12,7 +13,39 @@ static void desc_init(struct virtq *vq) {
   }
 }
 
+static int alloc_desc(struct virtq *vq) {
+  if(vq->nfree == 0)
+    panic("virtq kokatu");
+
+  u16 d = vq->free_head;
+  if(vq->desc[d].flags & VIRTQ_DESC_F_NEXT)
+    vq->free_head = vq->desc[d].next;
+  
+  vq->nfree--;
+
+  return d;
+}
+
+static void free_desc(struct virtq *vq, u16 n) {
+  u16 head = n;
+  int empty = 0;
+
+  if(vq->nfree == 0)
+    empty = 1;
+
+  while(vq->nfree++, (vq->desc[n].flags & VIRTQ_DESC_F_NEXT)) {
+    n = vq->desc[n].next;
+  }
+
+  vq->desc[n].flags = VIRTQ_DESC_F_NEXT;
+  if(!empty)
+    vq->desc[n].next = vq->free_head;
+  vq->free_head = head;
+}
+
 static void virtq_init(struct virtq *vq) {
+  memset(vq, 0, sizeof(*vq));
+
   vq->desc = pmalloc();
   vq->avail = pmalloc();
   vq->used = pmalloc();
@@ -25,6 +58,31 @@ static void virtq_init(struct virtq *vq) {
 static int virtio_net_init(struct virtio_pci_dev *vdev) {
   vmm_log("virtio_net_init\n");
   return -1;
+}
+
+static void virtio_rng_req(struct virtio_pci_dev *vdev, u64 *rnd) {
+  vmm_log("virtio-rng-req\n");
+
+  struct virtq *vq = &vdev->virtq;
+  *rnd = 0;
+
+  int d = alloc_desc(vq);
+
+  vmm_log("virtio-rng-req: %d\n", d);
+
+  vq->desc[d].addr = (u64)rnd;
+  vq->desc[d].len = sizeof(u64);
+  vq->desc[d].flags = VIRTQ_DESC_F_WRITE;
+
+  vq->avail->ring[vq->avail->idx % NQUEUE] = d;
+  vq->avail->idx++;
+
+  isb();
+
+  while(*rnd == 0)
+    ;
+
+  free_desc(vq, d);
 }
 
 static int virtio_rng_init(struct virtio_pci_dev *vdev) {
@@ -65,10 +123,13 @@ static int virtio_rng_init(struct virtio_pci_dev *vdev) {
   vtcfg->device_status = status;
   isb();
 
-  return -1;
+  if(!(status & DEV_STATUS_DRIVER_OK))
+    return -1;
+
+  return 0;
 }
 
-static void __virtio_scan_cap(struct virtio_pci_dev *vdev, struct virtio_pci_cap *cap) {
+static void __virtio_pci_scan_cap(struct virtio_pci_dev *vdev, struct virtio_pci_cap *cap) {
   if(cap->cap_vndr != 0x9)
     vmm_warn("virtio-pci invalid vendor %p\n", cap->cap_vndr);
 
@@ -81,13 +142,21 @@ static void __virtio_scan_cap(struct virtio_pci_dev *vdev, struct virtio_pci_cap
       u64 addr = pdev->reg_addr[cap->bar];
       struct virtio_pci_common_cfg *vtcfg = (struct virtio_pci_common_cfg *)addr;
 
-      vmm_log("vtcfg %p %d %d %p\n", vtcfg, vtcfg->num_queues, vtcfg->queue_enable, vtcfg->device_status);
-
       vdev->vtcfg = vtcfg;
 
       break;
     }
-    case VIRTIO_PCI_CAP_NOTIFY_CFG:
+    case VIRTIO_PCI_CAP_NOTIFY_CFG: {
+      u64 addr = pdev->reg_addr[cap->bar];
+      struct virtio_pci_notify_cap *ntcap = (struct virtio_pci_notify_cap *)cap;
+
+      vmm_log("ntcap %d %p %p\n", ntcap->notify_off_multiplier, addr, cap->offset);
+
+      vdev->notify_base = (void *)(addr + cap->offset);
+      vdev->notify_off_multiplier = ntcap->notify_off_multiplier;
+
+      break;
+    }
     case VIRTIO_PCI_CAP_ISR_CFG:
     case VIRTIO_PCI_CAP_DEVICE_CFG:
     case VIRTIO_PCI_CAP_PCI_CFG:
@@ -97,15 +166,15 @@ static void __virtio_scan_cap(struct virtio_pci_dev *vdev, struct virtio_pci_cap
 
   if(cap->cap_next) {
     cap = (struct virtio_pci_cap *)((char *)(pdev->cfg) + cap->cap_next);
-    __virtio_scan_cap(vdev, cap);
+    __virtio_pci_scan_cap(vdev, cap);
   }
 }
 
-static void virtio_scan_cap(struct virtio_pci_dev *vdev) {
+static void virtio_pci_scan_cap(struct virtio_pci_dev *vdev) {
   struct pci_config *cfg = vdev->pci->cfg;
   struct virtio_pci_cap *cap = (struct virtio_pci_cap *)((char *)cfg + cfg->cap_ptr);
 
-  __virtio_scan_cap(vdev, cap);
+  __virtio_pci_scan_cap(vdev, cap);
 }
 
 int virtio_pci_dev_init(struct pci_dev *pci_dev) {
@@ -114,7 +183,7 @@ int virtio_pci_dev_init(struct pci_dev *pci_dev) {
 
   struct virtio_pci_dev vdev;
   vdev.pci = pci_dev;
-  virtio_scan_cap(&vdev);
+  virtio_pci_scan_cap(&vdev);
 
   switch(pci_dev->dev_id - 0x1040) {
     case 1:
@@ -122,6 +191,10 @@ int virtio_pci_dev_init(struct pci_dev *pci_dev) {
       break;
     case 4:
       virtio_rng_init(&vdev);
+
+      u64 rnd;
+      virtio_rng_req(&vdev, &rnd);
+      vmm_log("rnd %p\n", rnd);
       break;
     default:
       return -1;

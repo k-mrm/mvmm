@@ -21,6 +21,11 @@ struct virtio_pci_cfg_cap {
   u8 pci_config_data[4];
 };
 
+struct virtio_pci_notify_cap {
+  struct virtio_pci_cap cap;
+  u32 notify_off_multiplier; /* Multiplier for queue_notify_off. */
+};
+
 struct virtio_pci_common_cfg {
   /* About the whole device. */
   u32 device_feature_select; /* read-write */
@@ -88,6 +93,8 @@ struct virtio_pci_dev {
   struct pci_dev *pci;
   struct virtio_pci_common_cfg *vtcfg;
   struct virtq virtq;
+  void *notify_base;
+  u32 notify_off_multiplier;
 };
 
 /* Common configuration */ 
