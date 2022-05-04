@@ -55,6 +55,13 @@ static void virtq_init(struct virtq *vq) {
   desc_init(vq);
 }
 
+void virtio_notify_queue(struct virtio_pci_dev *vdev, int queue) {
+  u16 notify_off = vdev->vtcfg->queue_notify_off;
+  u32 *addr = (u32 *)((u64)vdev->notify_base + notify_off * vdev->notify_off_multiplier);
+
+  *addr = queue;
+}
+
 static int virtio_net_init(struct virtio_pci_dev *vdev) {
   vmm_log("virtio_net_init\n");
   return -1;
@@ -76,6 +83,8 @@ static void virtio_rng_req(struct virtio_pci_dev *vdev, u64 *rnd) {
 
   vq->avail->ring[vq->avail->idx % NQUEUE] = d;
   vq->avail->idx++;
+
+  virtio_notify_queue(vdev, 0);
 
   isb();
 
@@ -191,10 +200,6 @@ int virtio_pci_dev_init(struct pci_dev *pci_dev) {
       break;
     case 4:
       virtio_rng_init(&vdev);
-
-      u64 rnd;
-      virtio_rng_req(&vdev, &rnd);
-      vmm_log("rnd %p\n", rnd);
       break;
     default:
       return -1;
