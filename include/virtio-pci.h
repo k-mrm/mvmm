@@ -1,9 +1,9 @@
-#ifndef MVMM_VIRTIO_PCIE_H
-#define MVMM_VIRTIO_PCIE_H
+#ifndef MVMM_VIRTIO_PCI_H
+#define MVMM_VIRTIO_PCI_H
 
 #include "aarch64.h"
 #include "types.h"
-#include "pcie.h"
+#include "pci.h"
 
 struct virtio_pci_cap {
   u8 cap_vndr;

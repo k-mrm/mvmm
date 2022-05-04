@@ -1,5 +1,5 @@
+#include "pci.h"
 #include "memmap.h"
-#include "pcie.h"
 #include "log.h"
 
 struct pci_config_space {

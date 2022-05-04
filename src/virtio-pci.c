@@ -1,5 +1,5 @@
-#include "pcie.h"
-#include "virtio-pcie.h"
+#include "pci.h"
+#include "virtio-pci.h"
 #include "log.h"
 #include "pmalloc.h"
 #include "lib.h"
@@ -67,15 +67,11 @@ static int virtio_net_init(struct virtio_pci_dev *vdev) {
   return -1;
 }
 
-static void virtio_rng_req(struct virtio_pci_dev *vdev, u64 *rnd) {
-  vmm_log("virtio-rng-req\n");
-
+void virtio_rng_req(struct virtio_pci_dev *vdev, u64 *rnd) {
   struct virtq *vq = &vdev->virtq;
   *rnd = 0;
 
   int d = alloc_desc(vq);
-
-  vmm_log("virtio-rng-req: %d\n", d);
 
   vq->desc[d].addr = (u64)rnd;
   vq->desc[d].len = sizeof(u64);
@@ -142,8 +138,6 @@ static void __virtio_pci_scan_cap(struct virtio_pci_dev *vdev, struct virtio_pci
   if(cap->cap_vndr != 0x9)
     vmm_warn("virtio-pci invalid vendor %p\n", cap->cap_vndr);
 
-  vmm_log("cap vndr %p next %p\n", cap->cap_vndr, cap->cap_next);
-
   struct pci_dev *pdev = vdev->pci;
 
   switch(cap->cfg_type) {
@@ -158,8 +152,6 @@ static void __virtio_pci_scan_cap(struct virtio_pci_dev *vdev, struct virtio_pci
     case VIRTIO_PCI_CAP_NOTIFY_CFG: {
       u64 addr = pdev->reg_addr[cap->bar];
       struct virtio_pci_notify_cap *ntcap = (struct virtio_pci_notify_cap *)cap;
-
-      vmm_log("ntcap %d %p %p\n", ntcap->notify_off_multiplier, addr, cap->offset);
 
       vdev->notify_base = (void *)(addr + cap->offset);
       vdev->notify_off_multiplier = ntcap->notify_off_multiplier;

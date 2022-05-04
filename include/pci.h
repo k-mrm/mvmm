@@ -1,5 +1,5 @@
-#ifndef MVMM_PCIE_H
-#define MVMM_PCIE_H
+#ifndef MVMM_PCI_H
+#define MVMM_PCI_H
 
 #include "aarch64.h"
 #include "types.h"
