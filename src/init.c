@@ -8,6 +8,7 @@
 #include "log.h"
 #include "vgic.h"
 #include "vtimer.h"
+#include "pci.h"
 
 extern struct guest hello;
 void vectable();
@@ -37,14 +38,13 @@ int vmm_init() {
 
   isb();
 
-  pcie_init();
+  pci_init();
 
   // new_vm("hello", 1, hello.start, hello.size, 0x40000000, 256*1024);
   new_vm("hello", 1, hello.start, hello.size, 0x40000000, 256*1024);
 
   enter_vcpu();
 
-  for(;;) {
+  for(;;)
     ;
-  }
 }

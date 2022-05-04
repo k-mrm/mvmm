@@ -72,7 +72,7 @@ static void pci_func_enable(struct pci_dev *dev) {
   }
 }
 
-static void pcie_scan_bus() {
+static void pci_scan_bus() {
   struct pci_dev dev;
   struct pci_config *cfg;
   struct pci_config_space *space = (struct pci_config_space *)PCIE_ECAM_BASE;
@@ -100,6 +100,6 @@ static void pcie_scan_bus() {
       }
 }
 
-void pcie_init() {
-  pcie_scan_bus();
+void pci_init() {
+  pci_scan_bus();
 }

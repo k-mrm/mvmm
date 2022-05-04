@@ -34,9 +34,8 @@ int devintr(int iar) {
 
 void el1trap() {
   int iar = gic_iar();
-  if(!devintr(iar)) {
+  if(!devintr(iar))
     uart_puts("sync!");
-  }
 }
 
 void vectable();

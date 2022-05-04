@@ -56,4 +56,6 @@ struct pci_dev {
   u32 reg_size[6];
 };
 
+void pci_init(void);
+
 #endif
