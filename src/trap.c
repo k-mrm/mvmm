@@ -127,7 +127,7 @@ void vm_sync_handler() {
       vcpu->reg.elr += 4;
       break;
     default:
-      vmm_log("%x %x %x %x\n", ec, iss, elr, far);
+      vmm_log("ec %p iss %p elr %p far %p\n", ec, iss, elr, far);
       panic("unknown sync");
   }
 }

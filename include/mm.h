@@ -24,6 +24,9 @@
 #define VTCR_SL0(n)   (((n) & 0x3) << 6)
 #define VTCR_SH0(n)   (((n) & 0x3) << 12)
 #define VTCR_TG0(n)   (((n) & 0x3) << 14)
+#define VTCR_PS(n)    (((n) & 0x7) << 16)
+#define VTCR_NSW      (1 << 29)
+#define VTCR_NSA      (1 << 30)
 
 /*
  *  39bit(=512GB) Virtual Address
@@ -62,6 +65,8 @@
 /* stage 2 attribute */
 #define S2PTE_AF  (1 << 10)
 #define S2PTE_S2AP(ap)  (((ap) & 3) << 6)
+#define S2PTE_RO  S2PTE_S2AP(1)
+#define S2PTE_WO  S2PTE_S2AP(2)
 #define S2PTE_RW  S2PTE_S2AP(3)
 #define S2PTE_ATTR(attr)  (((attr) & 7) << 2)
 #define S2PTE_NORMAL  S2PTE_ATTR(AI_NORMAL_NC_IDX)
@@ -81,5 +86,8 @@
 
 void pagemap(u64 *pgt, u64 va, u64 pa, u64 size, u64 attr);
 void pageunmap(u64 *pgt, u64 va, u64 size);
+
+u64 ipa2pa(u64 *pgt, u64 ipa);
+void s2mmu_init(void);
 
 #endif

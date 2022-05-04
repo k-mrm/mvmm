@@ -19,6 +19,7 @@
 #define intr_disable()  asm volatile("msr daifset, #2" ::: "memory")
 
 #define isb()   asm volatile("isb");
+#define dsb()   asm volatile("dsb sy");
 
 #define HCR_VM    (1<<0)
 #define HCR_SWIO  (1<<1)
@@ -35,5 +36,13 @@ static inline int cpuid() {
   read_sysreg(mpidr, mpidr_el1);
   return mpidr & 0xf;
 }
+
+static inline void tlb_flush() {
+  asm volatile("dsb ishst");
+  asm volatile("tlbi vmalls12e1");
+  asm volatile("dsb ish");
+  isb();
+}
+
 
 #endif

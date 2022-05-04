@@ -9,6 +9,7 @@
 #include "vgic.h"
 #include "vtimer.h"
 #include "pci.h"
+#include "log.h"
 
 extern struct guest hello;
 void vectable();
@@ -23,18 +24,15 @@ int vmm_init() {
   gic_init();
   gic_init_cpu(0);
   vtimer_init();
-
-  u64 vtcr = VTCR_T0SZ(25) | VTCR_SH0(0) | VTCR_SL0(1) | VTCR_TG0(0);
-  write_sysreg(vtcr_el2, vtcr);
-
-  u64 mair = (AI_DEVICE_nGnRnE << (8 * AI_DEVICE_nGnRnE_IDX)) | (AI_NORMAL_NC << (8 * AI_NORMAL_NC_IDX));
-  write_sysreg(mair_el2, mair);
+  s2mmu_init();
 
   write_sysreg(vbar_el2, (u64)vectable);
 
   u64 hcr = HCR_VM | HCR_SWIO | HCR_FMO | HCR_IMO |
             HCR_TWI | HCR_TWE | HCR_RW;
   write_sysreg(hcr_el2, hcr);
+
+  vmm_log("hcr_el2 %p\n", hcr);
 
   isb();
 

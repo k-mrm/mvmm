@@ -60,7 +60,7 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 al
       cpsize = img_size - p;
 
     memcpy(page, (char *)img_start+p, cpsize);
-    pagemap(vttbr, entry+p, (u64)page, PAGESIZE, S2PTE_NORMAL);
+    pagemap(vttbr, entry+p, (u64)page, PAGESIZE, S2PTE_NORMAL|S2PTE_RO);
   }
 
   for(; p < allocated; p += PAGESIZE) {
@@ -68,11 +68,11 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 al
     if(!page)
       panic("ram");
 
-    pagemap(vttbr, entry+p, (u64)page, PAGESIZE, S2PTE_NORMAL);
+    pagemap(vttbr, entry+p, (u64)page, PAGESIZE, S2PTE_NORMAL|S2PTE_RW);
   }
 
   /* map peripheral */
-  pagemap(vttbr, UARTBASE, UARTBASE, PAGESIZE, S2PTE_DEVICE);
+  pagemap(vttbr, UARTBASE, UARTBASE, PAGESIZE, S2PTE_DEVICE|S2PTE_RW);
 
   vm->vttbr = vttbr;
   vm->vgic = new_vgic();

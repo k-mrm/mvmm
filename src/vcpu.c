@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "pcpu.h"
 #include "log.h"
+#include "mm.h"
 
 struct vcpu vcpus[VCPU_MAX];
 
@@ -100,8 +101,11 @@ void enter_vcpu() {
   vcpu->state = RUNNING;
 
   write_sysreg(vttbr_el2, vcpu->vm->vttbr);
+  tlb_flush();
   restore_sysreg(vcpu);
   gic_restore_state(&vcpu->gic);
+
+  isb();
 
   /* enter vm */
   trapret();
@@ -150,8 +154,8 @@ void schedule() {
 static void save_sysreg(struct vcpu *vcpu) {
   read_sysreg(vcpu->sys.spsr_el1, spsr_el1);
   read_sysreg(vcpu->sys.elr_el1, elr_el1);
-  // read_sysreg(vcpu->sys.mpidr_el1, mpidr_el1);
-  // read_sysreg(vcpu->sys.midr_el1, midr_el1);
+  read_sysreg(vcpu->sys.mpidr_el1, mpidr_el1);
+  read_sysreg(vcpu->sys.midr_el1, midr_el1);
   read_sysreg(vcpu->sys.sp_el0, sp_el0);
   read_sysreg(vcpu->sys.sp_el1, sp_el1);
   read_sysreg(vcpu->sys.ttbr0_el1, ttbr0_el1);

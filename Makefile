@@ -10,7 +10,7 @@ CFLAGS = -Wall -Og -g -MD -ffreestanding -nostdinc -nostdlib -nostartfiles -mcpu
 CFLAGS += -I ./include/
 LDFLAGS = -nostdlib -nostartfiles
 
-#QEMUPREFIX = ~/qemu/build/
+QEMUPREFIX = ~/qemu/build/
 QEMU = $(QEMUPREFIX)qemu-system-aarch64
 GIC_VERSION = 3
 MACHINE = virt,gic-version=$(GIC_VERSION),virtualization=on,its=on
@@ -47,6 +47,7 @@ mvmm: $(OBJS) src/memory.ld guest/hello.img
 	$(LD) $(LDFLAGS) -T src/memory.ld -o $@ $(OBJS) hello-img.o
 
 qemu: mvmm
+	$(QEMU) --version
 	$(QEMU) $(QEMUOPTS)
 
 gdb: mvmm
