@@ -123,9 +123,10 @@ void gic_init(void);
 void gic_init_cpu(int cpuid);
 
 u32 gic_read_iar(void);
-void gic_eoi(u32 iar, int grp);
-void gic_deactive_int(u32 irq);
 int gic_max_spi(void);
+
+void gic_host_eoi(u32 iar, int grp);
+void gic_guest_eoi(u32 iar, int grp);
 
 void gic_set_target(u32 irq, u8 target);
 

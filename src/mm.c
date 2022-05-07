@@ -57,7 +57,7 @@ u64 ipa2pa(u64 *pgt, u64 ipa) {
 
 void s2mmu_init(void) {
   u64 vtcr = VTCR_T0SZ(25) | VTCR_SH0(0) | VTCR_SL0(1) |
-             VTCR_TG0(0) | VTCR_NSW | VTCR_NSA /* | VTCR_PS(2) */;
+             VTCR_TG0(0) | VTCR_NSW | VTCR_NSA | VTCR_PS(2);
   write_sysreg(vtcr_el2, vtcr);
 
   u64 mair = (AI_DEVICE_nGnRnE << (8 * AI_DEVICE_nGnRnE_IDX)) | (AI_NORMAL_NC << (8 * AI_NORMAL_NC_IDX));

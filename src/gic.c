@@ -114,7 +114,7 @@ u32 gic_read_iar() {
   return i;
 }
 
-void gic_eoi(u32 iar, int grp) {
+static void gic_eoi(u32 iar, int grp) {
   if(grp == 0)
     write_sysreg(icc_eoir0_el1, iar);
   else if(grp == 1)
@@ -123,8 +123,17 @@ void gic_eoi(u32 iar, int grp) {
     panic("?");
 }
 
-void gic_deactive_int(u32 irq) {
+static void gic_deactive_int(u32 irq) {
   write_sysreg(icc_dir_el1, irq);
+}
+
+void gic_host_eoi(u32 iar, int grp) {
+  gic_eoi(iar, grp);
+  gic_deactive_int(iar);
+}
+
+void gic_guest_eoi(u32 iar, int grp) {
+  gic_eoi(iar, grp);
 }
 
 void gic_irq_enable_redist(u32 cpuid, u32 irq) {

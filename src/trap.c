@@ -6,6 +6,7 @@
 #include "log.h"
 #include "mm.h"
 #include "mmio.h"
+#include "vpsci.h"
 
 void hyp_sync_handler() {
   u64 esr, elr, far;
@@ -26,10 +27,6 @@ void hyp_irq_handler() {
   u32 irq = iar & 0x3ff;
 
   switch(irq) {
-    /*
-     * case interrupt id:
-     *   interrupt_handler();
-     */
     case 33:
       uartintr();
       break;
@@ -40,10 +37,7 @@ void hyp_irq_handler() {
       break;
   }
 
-  gic_eoi(iar, 1);
-  gic_deactive_int(iar);
-
-  vmm_log("irq el2\n");
+  gic_host_eoi(iar, 1);
 }
 
 void vm_irq_handler() {
@@ -58,8 +52,7 @@ void vm_irq_handler() {
   u32 pirq = iar & 0x3ff;
   u32 virq = pirq;
 
-  // drop primary
-  gic_eoi(iar, 1);
+  gic_guest_eoi(iar, 1);
 
   vgic_forward_virq(vcpu, pirq, virq, 1);
 }
@@ -99,6 +92,18 @@ int vm_dabort_handler(struct vcpu *vcpu, u64 iss, u64 far) {
   return 0;
 }
 
+static void psci_handler(struct vcpu *vcpu) {
+  struct vpsci vpsci;
+  vpsci.funcid = (u32)vcpu->reg.x[0];
+  vpsci.x1 = vcpu->reg.x[1];
+  vpsci.x2 = vcpu->reg.x[2];
+  vpsci.x3 = vcpu->reg.x[3];
+
+  u64 ret = vpsci_emulate(&vpsci);
+
+  vcpu->reg.x[0] = ret;
+}
+
 void vm_sync_handler() {
   struct vcpu *vcpu;
   read_sysreg(vcpu, tpidr_el2);
@@ -119,6 +124,14 @@ void vm_sync_handler() {
       break;
     case 0x16:    /* hvc */
       vmm_log("hvc %x\n", iss);
+      switch(iss) {
+        case 0:
+          psci_handler(vcpu);
+          break;
+        default:
+          panic("?");
+          break;
+      }
       break;
     case 0x24:    /* data abort */
       if(vm_dabort_handler(vcpu, iss, far) < 0)
