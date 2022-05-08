@@ -26,6 +26,8 @@ void hyp_irq_handler() {
   u32 iar = gic_read_iar();
   u32 irq = iar & 0x3ff;
 
+  vmm_log("hyp_irq_handler %d\n", iar);
+
   switch(irq) {
     case 33:
       uartintr();
@@ -41,16 +43,15 @@ void hyp_irq_handler() {
 }
 
 void vm_irq_handler() {
-  vmm_log("vm_irq_handler\n");
-
-  struct vcpu *vcpu;
-  read_sysreg(vcpu, tpidr_el2);
+  struct vcpu *vcpu = cur_vcpu();
 
   vgic_irq_enter(vcpu);
 
   u32 iar = gic_read_iar();
   u32 pirq = iar & 0x3ff;
   u32 virq = pirq;
+
+  vmm_log("vm_irq_handler %d\n", iar);
 
   gic_guest_eoi(iar, 1);
 

@@ -37,12 +37,15 @@ QEMUOPTS += -nographic -kernel mvmm
 %.o: %.S
 	$(CC) $(CFLAGS) -c $< -o $@
 
-guest/hello.img: guest/Makefile
-	make -C guest
+guest/hello/hello.img: guest/Makefile
+	make -C guest/hello
+
+guest/xv6/kernel.img: guest/xv6/Makefile guest/xv6/kernel
+	make -C guest/xv6
 
 -include: *.d
 
-mvmm: $(OBJS) src/memory.ld guest/xv6/kernel.img
+mvmm: $(OBJS) src/memory.ld guest/xv6/kernel.img guest/hello/hello.img
 	$(LD) -r -b binary guest/xv6/kernel.img -o xv6.o
 	$(LD) $(LDFLAGS) -T src/memory.ld -o $@ $(OBJS) xv6.o
 

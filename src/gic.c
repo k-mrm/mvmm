@@ -160,11 +160,17 @@ void gic_irq_disable(u32 irq) {
   gicd_w(GICD_ICENABLER(irq / 32), is);
 }
 
+bool gic_irq_enabled(u32 irq) {
+  u32 is = gicd_r(GICD_ISENABLER(irq / 32));
+  return (is & (1 << (irq % 32))) != 0;
+}
+
 void gic_set_igroup(u32 irq, u32 igrp) {
   ;
 }
 
 void gic_set_target(u32 irq, u8 target) {
+  vmm_log("settttttttttarget %d %d", irq, target);
   u32 itargetsr = gicd_r(GICD_ITARGETSR(irq / 4));
   itargetsr &= ~((u32)0xff << (irq % 4 * 8));
   gicd_w(GICD_ITARGETSR(irq / 4), itargetsr | (target << (irq % 4 * 8)));
@@ -212,7 +218,7 @@ static void gic_setup_spi(u32 irq) {
 }
 
 static void hyp_intr_setup() {
-  gic_setup_spi(33);
+  // gic_setup_spi(33);
 }
 
 static void gicc_init(void) {

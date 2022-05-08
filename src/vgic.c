@@ -64,6 +64,8 @@ void vgic_irq_enter(struct vcpu *vcpu) {
 }
 
 static void vgic_irq_enable(struct vcpu *vcpu, int vintid) {
+  vmm_log("enabled %d irq\n", vintid);
+
   if(is_sgi_ppi(vintid))
     gic_irq_enable_redist(0, vintid);
   else if(is_spi(vintid))
@@ -90,9 +92,16 @@ static void vgic_set_target(struct vcpu *vcpu, int vintid, u8 target) {
     panic("?");
 }
 
+static void vgic_dump_irq_state(struct vcpu *vcpu, int intid);
+
 void vgic_forward_virq(struct vcpu *vcpu, u32 pirq, u32 virq, int grp) {
-  if(!(vcpu->vm->vgic->ctlr & GICD_CTLR_ENGRP(grp)))
+  if(!(vcpu->vm->vgic->ctlr & GICD_CTLR_ENGRP(grp))) {
+    vmm_warn("vgicd disabled\n");
     return;
+  }
+
+  vgic_dump_irq_state(vcpu, 33);
+  vgic_dump_irq_state(vcpu, 48);
 
   struct vgic_cpu *vgic = vcpu->vgic;
 
@@ -115,6 +124,12 @@ static struct vgic_irq *vgic_get_irq(struct vcpu *vcpu, int intid) {
 
   panic("unknown %d", intid);
   return NULL;
+}
+
+static void vgic_dump_irq_state(struct vcpu *vcpu, int intid) {
+  struct vgic_irq *virq = vgic_get_irq(vcpu, intid);
+  vmm_log("vgic irq dump %d\n", intid);
+  vmm_log("%d %d %d %d\n", virq->priority, virq->target, virq->enabled, virq->igroup);
 }
 
 int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_accsize accsize) {
@@ -157,7 +172,7 @@ int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_accsize a
       return 0;
     }
     case GICD_ICPENDR(0) ... GICD_ICPENDR(31)+3:
-      /* unimpl */
+      vmm_warn("unimpl");
       *val = 0;
       return 0;
     case GICD_IPRIORITYR(0) ... GICD_IPRIORITYR(254)+3: {
@@ -232,7 +247,7 @@ int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize a
       }
       return 0;
     case GICD_ICPENDR(0) ... GICD_ICPENDR(31)+3:
-      /* unimpl */
+      vmm_warn("unimpl");
       return 0;
     case GICD_IPRIORITYR(0) ... GICD_IPRIORITYR(254)+3:
       intid = (offset - GICD_IPRIORITYR(0)) / sizeof(u32) * 4;
@@ -282,7 +297,7 @@ static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_
       return 0;
     }
     case GICR_ICENABLER0:
-      /* TODO */
+      vmm_warn("unimpl");
       *val = 0;
       return 0;
     case GICR_ICPENDR0:
@@ -325,7 +340,6 @@ static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_
       for(int i = 0; i < 32; i++) {
         irq = vgic_get_irq(vcpu, i);
         if((val >> i) & 0x1) {
-          vmm_log("enabled %d irq\n", i);
           irq->enabled = 1;
           vgic_irq_enable(vcpu, i);
         }
@@ -333,14 +347,12 @@ static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_
       return 0;
     case GICR_ICENABLER0:
     case GICR_ICPENDR0:
-      /* TODO */
-      return 0;
+      vmm_warn("unimpl");
       return 0;
     case GICR_IPRIORITYR(0) ... GICR_IPRIORITYR(7):
       intid = (offset - GICR_IPRIORITYR(0)) / sizeof(u32) * 4;
       for(int i = 0; i < 4; i++) {
         irq = vgic_get_irq(vcpu, intid+i);
-        vmm_log("priority change %d\n", intid+i);
         irq->priority = (val >> (i * 8)) & 0xff;
       }
       return 0;
