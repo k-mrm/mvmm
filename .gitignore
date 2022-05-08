@@ -5,4 +5,5 @@
 *.dts
 
 mvmm
-guest/hello
+guest/hello/hello
+guest/xv6/kernel
