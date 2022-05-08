@@ -42,8 +42,8 @@ guest/hello.img: guest/Makefile
 
 -include: *.d
 
-mvmm: $(OBJS) src/memory.ld guest/xv6/kernel
-	$(LD) -r -b binary guest/xv6/kernel -o xv6.o
+mvmm: $(OBJS) src/memory.ld guest/xv6/kernel.img
+	$(LD) -r -b binary guest/xv6/kernel.img -o xv6.o
 	$(LD) $(LDFLAGS) -T src/memory.ld -o $@ $(OBJS) xv6.o
 
 qemu: mvmm guest/xv6/fs.img

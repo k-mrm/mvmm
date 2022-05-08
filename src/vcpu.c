@@ -107,7 +107,7 @@ void enter_vcpu() {
 
   isb();
 
-  vmm_log("enter vcpu %p\n", vcpu->reg.elr);
+  vmm_log("enter vcpu enter %p\n", vcpu->reg.elr);
 
   /* enter vm */
   trapret();

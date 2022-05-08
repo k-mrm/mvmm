@@ -135,7 +135,7 @@ void vm_sync_handler() {
       break;
     case 0x24:    /* data abort */
       if(vm_dabort_handler(vcpu, iss, far) < 0)
-        panic("dabort %x\n", iss);
+        panic("dabort %x", iss);
 
       vcpu->reg.elr += 4;
       break;

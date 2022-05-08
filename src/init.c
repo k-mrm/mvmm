@@ -38,8 +38,7 @@ int vmm_init() {
 
   pci_init();
 
-  // new_vm("hello", 1, hello.start, hello.size, 0x40000000, 256*1024);
-  new_vm("hello", 1, hello.start, hello.size, 0x40000000, 256*1024);
+  new_vm("hello", 1, hello.start, hello.size, 0x40000000, 128*1024*1024);
 
   enter_vcpu();
 
