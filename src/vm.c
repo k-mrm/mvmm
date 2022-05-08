@@ -26,6 +26,7 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 al
   vmm_log("new vm `%s`\n", name);
   vmm_log("n vcpu: %d\n", ncpu);
   vmm_log("allocated ram: %d byte\n", allocated);
+  vmm_log("img_start %p img_size %p byte\n", img_start, img_size);
 
   if(img_size > allocated)
     panic("img_size > allocated");

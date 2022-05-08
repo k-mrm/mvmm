@@ -6,6 +6,7 @@
 #include "param.h"
 #include "vgic.h"
 #include "gic.h"
+#include "aarch64.h"
 
 enum vcpu_state {
   UNUSED,
@@ -56,5 +57,11 @@ void free_vcpu(struct vcpu *vcpu);
 void vcpu_ready(struct vcpu *vcpu);
 
 void enter_vcpu(void);
+
+static inline struct vcpu *cur_vcpu() {
+  struct vcpu *vcpu;
+  read_sysreg(vcpu, tpidr_el2);
+  return vcpu;
+}
 
 #endif

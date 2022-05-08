@@ -1,6 +1,7 @@
 #include "types.h"
 #include "uart.h"
 #include "aarch64.h"
+#include "vcpu.h"
 
 #define va_list __builtin_va_list
 #define va_start(v, l)  __builtin_va_start(v, l)
@@ -127,6 +128,8 @@ void panic(const char *fmt, ...) {
   printf("!!!!!!vmm panic: ");
   vprintf(fmt, ap);
   printf("\n");
+
+  vcpu_dump(cur_vcpu());
 
   va_end(ap);
 

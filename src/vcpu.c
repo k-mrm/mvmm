@@ -107,6 +107,8 @@ void enter_vcpu() {
 
   isb();
 
+  vmm_log("enter vcpu %p\n", vcpu->reg.elr);
+
   /* enter vm */
   trapret();
 }
@@ -182,4 +184,22 @@ static void restore_sysreg(struct vcpu *vcpu) {
   write_sysreg(cntv_ctl_el0, vcpu->sys.cntv_ctl_el0);
   write_sysreg(cntv_tval_el0, vcpu->sys.cntv_tval_el0);
   write_sysreg(cntfrq_el0, vcpu->sys.cntfrq_el0);
+}
+
+void vcpu_dump(struct vcpu *vcpu) {
+  vmm_log("vcpu register dump %p\n", vcpu);
+  for(int i = 0; i < 31; i++) {
+    printf("x%d %p ", i, vcpu->reg.x[i]);
+    if((i+1) % 4 == 0)
+      printf("\n");
+  }
+  printf("spsr_el2 %p elr_el2 %p\n", vcpu->reg.spsr, vcpu->reg.elr);
+  printf("spsr_el1 %p elr_el1 %p mpdir_el1 %p\n",
+         vcpu->sys.spsr_el1, vcpu->sys.elr_el1, vcpu->sys.mpidr_el1);
+  printf("midr_el1 %p sp_el0 %p sp_el1 %p\n",
+         vcpu->sys.midr_el1, vcpu->sys.sp_el0, vcpu->sys.sp_el1);
+  printf("ttbr0_el1 %p ttbr1_el1 %p tcr_el1 %p\n",
+         vcpu->sys.ttbr0_el1, vcpu->sys.ttbr1_el1, vcpu->sys.tcr_el1);
+  printf("vbar_el1 %p sctlr_el1 %p cntv_ctl_el0 %p\n",
+         vcpu->sys.vbar_el1, vcpu->sys.sctlr_el1, vcpu->sys.cntv_ctl_el0);
 }
