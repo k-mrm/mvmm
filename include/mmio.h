@@ -11,14 +11,20 @@ enum mmio_accsize {
   ACC_DOUBLEWORD = 1<<3,
 };
 
+struct mmio_access {
+  u64 ipa;
+  enum mmio_accsize accsize;
+  int wnr: 1;
+};
+
 struct mmio_info {
   u64 base;
   u64 size;
-  int (*read)(struct vcpu *, u64, u64 *, enum mmio_accsize);
-  int (*write)(struct vcpu *, u64, u64, enum mmio_accsize);
+  int (*read)(struct vcpu *, u64, u64 *, struct mmio_access *);
+  int (*write)(struct vcpu *, u64, u64, struct mmio_access *);
 };
 
-int mmio_emulate(struct vcpu *vcpu, u64 ipa, u64 *reg, enum mmio_accsize accsize, bool wr);
+int mmio_emulate(struct vcpu *vcpu, u64 *reg, struct mmio_access *mmio);
 
 extern struct mmio_info virtmap[];
 

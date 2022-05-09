@@ -132,12 +132,12 @@ static void vgic_dump_irq_state(struct vcpu *vcpu, int intid) {
   vmm_log("%d %d %d %d\n", virq->priority, virq->target, virq->enabled, virq->igroup);
 }
 
-int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_accsize accsize) {
+int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_access *mmio) {
   int intid, idx;
   struct vgic_irq *irq;
   struct vgic *vgic = vcpu->vm->vgic;
 
-  if(!(accsize & ACC_WORD))
+  if(!(mmio->accsize & ACC_WORD))
     panic("unimplemented");
 
   switch(offset) {
@@ -205,7 +205,7 @@ int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_accsize a
   return -1;
 }
 
-int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize accsize) {
+int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_access *mmio) {
   int intid;
   struct vgic_irq *irq;
   struct vgic *vgic = vcpu->vm->vgic;
@@ -274,7 +274,7 @@ readonly:
   return 0;
 }
 
-static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_accsize accsize) {
+static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_access *mmio) {
   int intid;
   struct vgic_irq *irq;
 
@@ -326,7 +326,7 @@ static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_
   return -1;
 }
 
-static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize accsize) {
+static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_access *mmio) {
   int intid;
   struct vgic_irq *irq;
 
@@ -367,7 +367,7 @@ static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_
   return -1;
 }
 
-int vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_accsize accsize) {
+int vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_access *mmio) {
   u32 ridx = offset / 0x20000;
   u32 roffset = offset % 0x20000;
 
@@ -378,10 +378,10 @@ int vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, enum mmio_accsize a
 
   vcpu = vcpu->vm->vcpus[ridx];
 
-  return __vgicr_mmio_read(vcpu, roffset, val, accsize);
+  return __vgicr_mmio_read(vcpu, roffset, val, mmio);
 }
 
-int vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize accsize) {
+int vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_access *mmio) {
   u32 ridx = offset / 0x20000;
   u32 roffset = offset % 0x20000;
 
@@ -392,7 +392,7 @@ int vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, enum mmio_accsize a
 
   vcpu = vcpu->vm->vcpus[ridx];
 
-  return __vgicr_mmio_write(vcpu, roffset, val, accsize);
+  return __vgicr_mmio_write(vcpu, roffset, val, mmio);
 }
 
 struct vgic *new_vgic() {

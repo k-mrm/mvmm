@@ -74,7 +74,6 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 al
 
   /* map peripheral */
   pagemap(vttbr, UARTBASE, UARTBASE, PAGESIZE, S2PTE_DEVICE|S2PTE_RW);
-  pagemap(vttbr, VIRTIO0, VIRTIO0, PAGESIZE, S2PTE_DEVICE|S2PTE_RW);
 
   vm->vttbr = vttbr;
   vm->vgic = new_vgic();

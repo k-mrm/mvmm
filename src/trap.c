@@ -90,7 +90,13 @@ int vm_dabort_handler(struct vcpu *vcpu, u64 iss, u64 far) {
     default: panic("?");
   }
 
-  if(mmio_emulate(vcpu, ipa, &vcpu->reg.x[r], accsz, wnr) < 0)
+  struct mmio_access mmio = {
+    .ipa = ipa,
+    .accsize = accsz,
+    .wnr = wnr,
+  };
+
+  if(mmio_emulate(vcpu, &vcpu->reg.x[r], &mmio) < 0)
     return -1;
 
   return 0;
