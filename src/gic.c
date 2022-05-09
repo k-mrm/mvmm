@@ -108,6 +108,11 @@ u64 gic_make_lr(u32 pirq, u32 virq, int grp) {
   return ICH_LR_STATE(LR_PENDING) | ICH_LR_HW | ICH_LR_GROUP(grp) | ICH_LR_PINTID(pirq) | ICH_LR_VINTID(virq);
 }
 
+static bool gic_irq_pending(u32 irq) {
+  u32 is = gicd_r(GICD_ISPENDR(irq / 32));
+  return (is & (1 << (irq % 32))) != 0;
+}
+
 u32 gic_read_iar() {
   u32 i;
   read_sysreg(i, icc_iar1_el1);
@@ -123,13 +128,13 @@ static void gic_eoi(u32 iar, int grp) {
     panic("?");
 }
 
-static void gic_deactive_int(u32 irq) {
+void gic_deactive_irq(u32 irq) {
   write_sysreg(icc_dir_el1, irq);
 }
 
 void gic_host_eoi(u32 iar, int grp) {
   gic_eoi(iar, grp);
-  gic_deactive_int(iar);
+  gic_deactive_irq(iar);
 }
 
 void gic_guest_eoi(u32 iar, int grp) {
@@ -228,7 +233,6 @@ static void gicc_init(void) {
   write_sysreg(icc_pmr_el1, 0xff);
   write_sysreg(icc_ctlr_el1, ICC_CTLR_EOImode(1));
 
-  write_sysreg(icc_igrpen0_el1, 1);
   write_sysreg(icc_igrpen1_el1, 1);
 
   isb();

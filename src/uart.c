@@ -61,5 +61,5 @@ void uart_init() {
   *R(IMSC) = 0;
   *R(LCRH) = LCRH_FEN | LCRH_WLEN_8BIT;
   *R(CR) = 0x301;   /* RXE, TXE, UARTEN */
-  *R(IMSC) = (1<<4);
+  // *R(IMSC) = (1<<4);
 }

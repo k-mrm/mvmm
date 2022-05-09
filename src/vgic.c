@@ -94,14 +94,12 @@ static void vgic_set_target(struct vcpu *vcpu, int vintid, u8 target) {
 
 static void vgic_dump_irq_state(struct vcpu *vcpu, int intid);
 
-void vgic_forward_virq(struct vcpu *vcpu, u32 pirq, u32 virq, int grp) {
+int vgic_forward_virq(struct vcpu *vcpu, u32 pirq, u32 virq, int grp) {
+  /*
   if(!(vcpu->vm->vgic->ctlr & GICD_CTLR_ENGRP(grp))) {
     vmm_warn("vgicd disabled\n");
-    return;
-  }
-
-  vgic_dump_irq_state(vcpu, 33);
-  vgic_dump_irq_state(vcpu, 48);
+    return -1;
+  }*/
 
   struct vgic_cpu *vgic = vcpu->vgic;
 
@@ -112,6 +110,8 @@ void vgic_forward_virq(struct vcpu *vcpu, u32 pirq, u32 virq, int grp) {
     panic("no lr");
 
   gic_write_lr(n, lr);
+
+  return 0;
 }
 
 static struct vgic_irq *vgic_get_irq(struct vcpu *vcpu, int intid) {

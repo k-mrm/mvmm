@@ -39,7 +39,7 @@ void hyp_irq_handler() {
       break;
   }
 
-  gic_host_eoi(iar, 1);
+  gic_host_eoi(irq, 1);
 }
 
 void vm_irq_handler() {
@@ -53,9 +53,12 @@ void vm_irq_handler() {
 
   vmm_log("vm_irq_handler %d\n", iar);
 
-  gic_guest_eoi(iar, 1);
+  gic_guest_eoi(pirq, 1);
 
-  vgic_forward_virq(vcpu, pirq, virq, 1);
+  if(vgic_forward_virq(vcpu, pirq, virq, 1) < 0)
+    gic_deactive_irq(pirq);
+
+  isb();
 }
 
 static u64 faulting_ipa(u64 vaddr) {
