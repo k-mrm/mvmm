@@ -7,10 +7,31 @@
 
 struct virtio_mmio_dev vtdev;
 
+__attribute__((aligned(PAGESIZE)))
 char virtqueue[PAGESIZE*2];
 
 static int virtq_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_access *mmio) {
-  return -1;
+  u32 desc_size = sizeof(struct virtq_desc) * vtdev.qnum;
+
+  if(offset >= desc_size)
+    goto passthrough;
+
+  u64 descoff = offset % sizeof(struct virtq_desc); 
+
+  if(descoff == offsetof(struct virtq_desc, addr)) {
+    vmm_log("rrrrmiiiiiii addr %p\n", mmio->accsize);
+  }
+
+passthrough:
+  switch(mmio->accsize) {
+    case ACC_BYTE:        *val = *(u8 *)(&virtqueue[offset]); break;
+    case ACC_HALFWORD:    *val = *(u16 *)(&virtqueue[offset]); break;
+    case ACC_WORD:        *val = *(u32 *)(&virtqueue[offset]); break;
+    case ACC_DOUBLEWORD:  *val = *(u64 *)(&virtqueue[offset]); break;
+    default: panic("?");
+  }
+
+  return 0;
 }
 
 static int virtq_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_access *mmio) {
@@ -30,10 +51,10 @@ static int virtq_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_acces
 
 passthrough:
   switch(mmio->accsize) {
-    case ACC_BYTE:        *(u8 *)&virtqueue[offset] = val; break;
-    case ACC_HALFWORD:    *(u16 *)&virtqueue[offset] = val; break;
-    case ACC_WORD:        *(u32 *)&virtqueue[offset] = val; break;
-    case ACC_DOUBLEWORD:  *(u64 *)&virtqueue[offset] = val; break;
+    case ACC_BYTE:        *(u8 *)(&virtqueue[offset]) = val; break;
+    case ACC_HALFWORD:    *(u16 *)(&virtqueue[offset]) = val; break;
+    case ACC_WORD:        *(u32 *)(&virtqueue[offset]) = val; break;
+    case ACC_DOUBLEWORD:  *(u64 *)(&virtqueue[offset]) = val; break;
     default: panic("?");
   }
 
@@ -66,9 +87,9 @@ static int virtio_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio
       break;
     case VIRTIO_MMIO_QUEUE_PFN: {
       u64 pfn_ipa = val << 12;
-      vmm_log("queuepfn %p -> %p\n", pfn_ipa, &virtqueue);
       pagetrap(vcpu->vm, pfn_ipa, 0x2000, virtq_read, virtq_write);
-      val = (u64)&virtqueue;
+      val = (u64)&virtqueue >> 12;
+      vmm_log("queuepfn %p -> %p(%p)\n", pfn_ipa, &virtqueue, val);
       break;
     }
   }
