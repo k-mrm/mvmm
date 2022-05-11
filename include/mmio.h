@@ -18,6 +18,7 @@ struct mmio_access {
 };
 
 struct mmio_info {
+  struct mmio_info *next;
   u64 base;
   u64 size;
   int (*read)(struct vcpu *, u64, u64 *, struct mmio_access *);
@@ -25,7 +26,8 @@ struct mmio_info {
 };
 
 int mmio_emulate(struct vcpu *vcpu, u64 *reg, struct mmio_access *mmio);
-
-extern struct mmio_info virtmap[];
+int mmio_reg_handler(struct vm *vm, u64 ipa, u64 size,
+                     int (*read)(struct vcpu *, u64, u64 *, struct mmio_access *),
+                     int (*write)(struct vcpu *, u64, u64, struct mmio_access *));
 
 #endif

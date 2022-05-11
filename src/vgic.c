@@ -132,7 +132,7 @@ static void vgic_dump_irq_state(struct vcpu *vcpu, int intid) {
   vmm_log("%d %d %d %d\n", virq->priority, virq->target, virq->enabled, virq->igroup);
 }
 
-int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_access *mmio) {
+static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_access *mmio) {
   int intid, idx;
   struct vgic_irq *irq;
   struct vgic *vgic = vcpu->vm->vgic;
@@ -205,7 +205,7 @@ int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_access 
   return -1;
 }
 
-int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_access *mmio) {
+static int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_access *mmio) {
   int intid;
   struct vgic_irq *irq;
   struct vgic *vgic = vcpu->vm->vgic;
@@ -367,7 +367,7 @@ static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmi
   return -1;
 }
 
-int vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_access *mmio) {
+static int vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_access *mmio) {
   u32 ridx = offset / 0x20000;
   u32 roffset = offset % 0x20000;
 
@@ -381,7 +381,7 @@ int vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_access 
   return __vgicr_mmio_read(vcpu, roffset, val, mmio);
 }
 
-int vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_access *mmio) {
+static int vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_access *mmio) {
   u32 ridx = offset / 0x20000;
   u32 roffset = offset % 0x20000;
 
@@ -395,7 +395,7 @@ int vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_access 
   return __vgicr_mmio_write(vcpu, roffset, val, mmio);
 }
 
-struct vgic *new_vgic() {
+struct vgic *new_vgic(struct vm *vm) {
   struct vgic *vgic = allocvgic();
   vgic->spi_max = gic_max_spi();
   vgic->nspis = vgic->spi_max - 31;
@@ -405,6 +405,9 @@ struct vgic *new_vgic() {
     panic("nomem");
 
   vmm_log("nspis %d sizeof nspi %d\n", vgic->nspis, sizeof(struct vgic_irq) * vgic->nspis);
+
+  pagetrap(vm, GICDBASE, 0x10000, vgicd_mmio_read, vgicd_mmio_write);
+  pagetrap(vm, GICRBASE, 0xf60000, vgicr_mmio_read, vgicr_mmio_write);
 
   return vgic;
 }

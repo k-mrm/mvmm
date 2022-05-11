@@ -4,23 +4,28 @@
 #include "mmio.h"
 #include "memmap.h"
 #include "vcpu.h"
+#include "vm.h"
 
-int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_access *mmio);
-int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_access *mmio);
-int vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_access *mmio);
-int vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_access *mmio);
-int vtdev_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_access *mmio);
-int vtdev_mmio_write(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_access *mmio);
+struct mmio_info mmio_infos[128];
 
-struct mmio_info virtmap[] = {
-  {GICDBASE, 0x10000, vgicd_mmio_read, vgicd_mmio_write},
-  {GICRBASE, 0xf60000, vgicr_mmio_read, vgicr_mmio_write},
-  {VIRTIO0, 0x200, vtdev_mmio_read, vtdev_mmio_write},
-  {0,0,NULL,NULL},
-};
+static struct mmio_info *alloc_mmio_info(struct mmio_info *prev) {
+  for(struct mmio_info *m = mmio_infos; m < &mmio_infos[128]; m++) {
+    if(m->size == 0) {
+      m->size = 1;
+      m->next = prev;
+      return m;
+    }
+  }
+
+  panic("nomem");
+  return NULL;
+}
 
 int mmio_emulate(struct vcpu *vcpu, u64 *reg, struct mmio_access *mmio) {
   struct mmio_info *map = vcpu->vm->pmap;
+  if(!map)
+    return -1;
+
   u64 ipa = mmio->ipa;
 
   for(struct mmio_info *m = map; m->size != 0; m++) {
@@ -35,4 +40,21 @@ int mmio_emulate(struct vcpu *vcpu, u64 *reg, struct mmio_access *mmio) {
   }
 
   return -1;
+}
+
+int mmio_reg_handler(struct vm *vm, u64 ipa, u64 size,
+                     int (*read)(struct vcpu *, u64, u64 *, struct mmio_access *),
+                     int (*write)(struct vcpu *, u64, u64, struct mmio_access *)) {
+  if(size == 0)
+    return -1;
+
+  struct mmio_info *new = alloc_mmio_info(vm->pmap);
+  vm->pmap = new;
+
+  new->base = ipa;
+  new->size = size;
+  new->read = read;
+  new->write = write;
+
+  return 0;
 }

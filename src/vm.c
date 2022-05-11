@@ -22,6 +22,18 @@ static struct vm *allocvm() {
   return NULL;
 }
 
+void pagetrap(struct vm *vm, u64 ipa, u64 size,
+              int (*read_handler)(struct vcpu *, u64, u64 *, struct mmio_access *),
+              int (*write_handler)(struct vcpu *, u64, u64, struct mmio_access *)) {
+  u64 *vttbr = vm->vttbr;
+
+  if(pagewalk(vttbr, ipa, 0))
+    pageunmap(vttbr, ipa, size);
+
+  if(mmio_reg_handler(vm, ipa, size, read_handler, write_handler) < 0)
+    panic("?");
+}
+
 void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 allocated) {
   vmm_log("new vm `%s`\n", name);
   vmm_log("n vcpu: %d\n", ncpu);
@@ -76,8 +88,10 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 al
   pagemap(vttbr, UARTBASE, UARTBASE, PAGESIZE, S2PTE_DEVICE|S2PTE_RW);
 
   vm->vttbr = vttbr;
-  vm->vgic = new_vgic();
-  vm->pmap = virtmap;
+  vm->pmap = NULL;
+  vm->vgic = new_vgic(vm);
+
+  virtio_mmio_init(vm);
 
   vcpu_ready(vm->vcpus[0]);
 }

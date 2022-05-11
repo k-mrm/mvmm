@@ -3,6 +3,8 @@
 
 #include "types.h"
 
+struct vm;
+
 #define VIRTIO_MMIO_MAGIC_VALUE		0x000 // 0x74726976
 #define VIRTIO_MMIO_VERSION		0x004 // version; 1 is legacy
 #define VIRTIO_MMIO_DEVICE_ID		0x008 // device type; 1 is net, 2 is disk
@@ -21,5 +23,6 @@
 #define VIRTIO_MMIO_INTERRUPT_ACK	0x064 // write-only
 #define VIRTIO_MMIO_STATUS		0x070 // read/write
 
+void virtio_mmio_init(struct vm *vm);
 
 #endif

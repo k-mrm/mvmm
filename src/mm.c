@@ -4,18 +4,21 @@
 #include "pmalloc.h"
 #include "printf.h"
 
-u64 *pagewalk(u64 *pgt, u64 va) {
+u64 *pagewalk(u64 *pgt, u64 va, int alloc) {
   for(int level = 1; level < 3; level++) {
     u64 *pte = &pgt[PIDX(level, va)];
 
     if((*pte & PTE_VALID) && (*pte & PTE_TABLE)) {
       pgt = (u64 *)PTE_PA(*pte);
-    } else {
+    } else if(alloc) {
       pgt = pmalloc();
       if(!pgt)
-        return NULL;
+        panic("nomem");
 
       *pte = PTE_PA(pgt) | PTE_TABLE | PTE_VALID;
+    } else {
+      /* unmapped */
+      return NULL;
     }
   }
 
@@ -27,7 +30,7 @@ void pagemap(u64 *pgt, u64 va, u64 pa, u64 size, u64 attr) {
     panic("invalid pagemap");
 
   for(u64 p = 0; p < size; p += PAGESIZE, va += PAGESIZE, pa += PAGESIZE) {
-    u64 *pte = pagewalk(pgt, va);
+    u64 *pte = pagewalk(pgt, va, 1);
     if(*pte & PTE_AF)
       panic("this entry has been used");
 
@@ -40,9 +43,9 @@ void pageunmap(u64 *pgt, u64 va, u64 size) {
     panic("invalid pageunmap");
 
   for(u64 p = 0; p < size; p += PAGESIZE, va += PAGESIZE) {
-    u64 *pte = pagewalk(pgt, va);
+    u64 *pte = pagewalk(pgt, va, 0);
     if(*pte == 0)
-      panic("bad unmap");
+      panic("unmapped");
 
     u64 pa = PTE_PA(*pte);
     pfree((void *)pa);
@@ -51,7 +54,10 @@ void pageunmap(u64 *pgt, u64 va, u64 size) {
 }
 
 u64 ipa2pa(u64 *pgt, u64 ipa) {
-  u64 *pte = pagewalk(pgt, ipa);
+  u64 *pte = pagewalk(pgt, ipa, 0);
+  if(!pte)
+    return 0;
+
   return PTE_PA(*pte);
 }
 
