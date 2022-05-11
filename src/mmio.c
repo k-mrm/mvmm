@@ -28,7 +28,7 @@ int mmio_emulate(struct vcpu *vcpu, u64 *reg, struct mmio_access *mmio) {
 
   u64 ipa = mmio->ipa;
 
-  for(struct mmio_info *m = map; m->size != 0; m++) {
+  for(struct mmio_info *m = map; m; m = m->next) {
     if(m->base <= ipa && ipa < m->base + m->size) {
       if(mmio->wnr && m->write)
         return m->write(vcpu, ipa - m->base, *reg, mmio);
