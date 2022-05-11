@@ -76,10 +76,13 @@ int vm_dabort_handler(struct vcpu *vcpu, u64 iss, u64 far) {
   bool wnr = (iss >> 6) & 0x1;
   int sas = (iss >> 22) & 0x3;
   int r = (iss >> 16) & 0x1f;
+  int fnv = (iss >> 10) & 0x1;
+
+  if(fnv)
+    panic("fnv");
 
   u64 elr;
   read_sysreg(elr, elr_el2);
-  vmm_log("dabort ipa %p %p %s\n", ipa, elr, wnr? "write" : "read");
 
   enum mmio_accsize accsz;
   switch(sas) {
@@ -90,13 +93,15 @@ int vm_dabort_handler(struct vcpu *vcpu, u64 iss, u64 far) {
     default: panic("?");
   }
 
+  vmm_log("dabort ipa %p %p %s %d byte r%d\n", ipa, elr, wnr? "write" : "read", 8 * accsz, r);
+
   struct mmio_access mmio = {
     .ipa = ipa,
     .accsize = accsz,
     .wnr = wnr,
   };
 
-  if(mmio_emulate(vcpu, &vcpu->reg.x[r], &mmio) < 0)
+  if(mmio_emulate(vcpu, r, &mmio) < 0)
     return -1;
 
   return 0;
@@ -119,7 +124,6 @@ void vm_sync_handler() {
   read_sysreg(vcpu, tpidr_el2);
 
   // vmm_log("el0/1 sync!\n");
-
   u64 esr, elr, far;
   read_sysreg(esr, esr_el2);
   read_sysreg(elr, elr_el2);

@@ -25,7 +25,7 @@ struct mmio_info {
   int (*write)(struct vcpu *, u64, u64, struct mmio_access *);
 };
 
-int mmio_emulate(struct vcpu *vcpu, u64 *reg, struct mmio_access *mmio);
+int mmio_emulate(struct vcpu *vcpu, int rn, struct mmio_access *mmio);
 int mmio_reg_handler(struct vm *vm, u64 ipa, u64 size,
                      int (*read)(struct vcpu *, u64, u64 *, struct mmio_access *),
                      int (*write)(struct vcpu *, u64, u64, struct mmio_access *));

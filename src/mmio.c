@@ -5,6 +5,7 @@
 #include "memmap.h"
 #include "vcpu.h"
 #include "vm.h"
+#include "log.h"
 
 struct mmio_info mmio_infos[128];
 
@@ -21,17 +22,27 @@ static struct mmio_info *alloc_mmio_info(struct mmio_info *prev) {
   return NULL;
 }
 
-int mmio_emulate(struct vcpu *vcpu, u64 *reg, struct mmio_access *mmio) {
+int mmio_emulate(struct vcpu *vcpu, int rn, struct mmio_access *mmio) {
   struct mmio_info *map = vcpu->vm->pmap;
   if(!map)
     return -1;
 
   u64 ipa = mmio->ipa;
+  u64 *reg = NULL;
+  u64 val;
+
+  if(rn == 31) {
+    /* x31 == xzr */
+    val = 0;
+  } else {
+    reg = &vcpu->reg.x[rn];
+    val = *reg;
+  }
 
   for(struct mmio_info *m = map; m; m = m->next) {
     if(m->base <= ipa && ipa < m->base + m->size) {
       if(mmio->wnr && m->write)
-        return m->write(vcpu, ipa - m->base, *reg, mmio);
+        return m->write(vcpu, ipa - m->base, val, mmio);
       else if(m->read)
         return m->read(vcpu, ipa - m->base, reg, mmio);
       else

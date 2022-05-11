@@ -56,6 +56,12 @@ struct virtio_mmio_dev {
   int qnum;
 };
 
+struct virtio_blk_req {
+  u32 type; // VIRTIO_BLK_T_IN or ..._OUT
+  u32 reserved;
+  u64 sector;
+};
+
 void virtio_mmio_init(struct vm *vm);
 
 #endif

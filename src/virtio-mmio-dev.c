@@ -8,7 +8,7 @@
 struct virtio_mmio_dev vtdev;
 
 __attribute__((aligned(PAGESIZE)))
-char virtqueue[PAGESIZE*2];
+char virtqueue[PAGESIZE*2] = {0};
 
 static int virtq_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_access *mmio) {
   u32 desc_size = sizeof(struct virtq_desc) * vtdev.qnum;
@@ -17,10 +17,6 @@ static int virtq_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_acces
     goto passthrough;
 
   u64 descoff = offset % sizeof(struct virtq_desc); 
-
-  if(descoff == offsetof(struct virtq_desc, addr)) {
-    vmm_log("rrrrmiiiiiii addr %p\n", mmio->accsize);
-  }
 
 passthrough:
   switch(mmio->accsize) {
@@ -84,6 +80,12 @@ static int virtio_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio
     case VIRTIO_MMIO_QUEUE_NUM:
       vtdev.qnum = val;
       vmm_log("queuenum %d\n", val);
+      break;
+    case VIRTIO_MMIO_GUEST_PAGE_SIZE:
+      vmm_log("guest pagesize: %d\n", val);
+      break;
+    case VIRTIO_MMIO_QUEUE_NOTIFY:
+      vmm_log("queue notify val: %d\n", val);
       break;
     case VIRTIO_MMIO_QUEUE_PFN: {
       u64 pfn_ipa = val << 12;
