@@ -23,6 +23,39 @@ struct vm;
 #define VIRTIO_MMIO_INTERRUPT_ACK	0x064 // write-only
 #define VIRTIO_MMIO_STATUS		0x070 // read/write
 
+#define NUM 8
+
+struct virtq_desc {
+  u64 addr;
+  u32 len;
+  u16 flags;
+  u16 next;
+};
+#define VRING_DESC_F_NEXT  1 // chained with another descriptor
+#define VRING_DESC_F_WRITE 2 // device writes (vs read)
+
+struct virtq_avail {
+  u16 flags; // always zero
+  u16 idx;   // driver will write ring[idx] next
+  u16 ring[NUM]; // descriptor numbers of chain heads
+  u16 unused;
+};
+
+struct virtq_used_elem {
+  u32 id;   // index of start of completed descriptor chain
+  u32 len;
+};
+
+struct virtq_used {
+  u16 flags; // always zero
+  u16 idx;   // device increments when it adds a ring[] entry
+  struct virtq_used_elem ring[NUM];
+};
+
+struct virtio_mmio_dev {
+  int qnum;
+};
+
 void virtio_mmio_init(struct vm *vm);
 
 #endif

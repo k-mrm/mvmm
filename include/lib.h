@@ -10,6 +10,4 @@ int strcmp(const char *s1, const char *s2);
 u64 strlen(const char *s);
 char *strcpy(char *dst, const char *src);
 
-#define offsetof(st, m)   ((u64)&(((st *)0)->m))
-
 #endif

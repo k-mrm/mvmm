@@ -17,4 +17,6 @@ typedef _Bool bool;
 #define true 1
 #define false 0
 
+#define offsetof(st, m) ((u64)((char *)&((st *)0)->m - (char *)0))
+
 #endif

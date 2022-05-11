@@ -32,6 +32,8 @@ void pagetrap(struct vm *vm, u64 ipa, u64 size,
 
   if(mmio_reg_handler(vm, ipa, size, read_handler, write_handler) < 0)
     panic("?");
+
+  tlb_flush();
 }
 
 void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 allocated) {

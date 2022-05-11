@@ -57,8 +57,9 @@ u64 ipa2pa(u64 *pgt, u64 ipa) {
   u64 *pte = pagewalk(pgt, ipa, 0);
   if(!pte)
     return 0;
+  u32 off = ipa & (PAGESIZE-1);
 
-  return PTE_PA(*pte);
+  return PTE_PA(*pte) + off;
 }
 
 void s2mmu_init(void) {
