@@ -23,7 +23,7 @@ struct vm;
 #define VIRTIO_MMIO_INTERRUPT_ACK	0x064 // write-only
 #define VIRTIO_MMIO_STATUS		0x070 // read/write
 
-#define NUM 8
+#define NUM 16
 
 struct virtq_desc {
   u64 addr;
@@ -52,10 +52,6 @@ struct virtq_used {
   struct virtq_used_elem ring[NUM];
 };
 
-struct virtio_mmio_dev {
-  int qnum;
-};
-
 struct virtio_blk_req {
   u32 type; // VIRTIO_BLK_T_IN or ..._OUT
   u32 reserved;
@@ -63,5 +59,17 @@ struct virtio_blk_req {
 };
 
 void virtio_mmio_init(struct vm *vm);
+
+struct vtdev_desc {
+  u64 ipa;
+  u64 real_addr;
+  u32 len;
+  bool across_page;
+};
+
+struct virtio_mmio_dev {
+  int qnum;
+  struct vtdev_desc ring[NUM];
+};
 
 #endif

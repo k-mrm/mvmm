@@ -53,6 +53,34 @@ void pageunmap(u64 *pgt, u64 va, u64 size) {
   }
 }
 
+void pageremap(u64 *pgt, u64 va, u64 pa, u64 size, u64 attr) {
+  if(va % PAGESIZE != 0 || size % PAGESIZE != 0)
+    panic("invalid pageremap");
+
+  /* TODO: copy old page */
+
+  pageunmap(pgt, va, size);
+  pagemap(pgt, va, pa, size, attr);
+}
+
+void copy_to_guest(u64 *pgt, u64 to_ipa, char *from, u64 len) {
+  while(len > 0) {
+    u64 page = to_ipa & ~(PAGESIZE-1);
+    u64 pa = ipa2pa(pgt, to_ipa);
+    if(pa == 0)
+      panic("a");
+    u64 n = PAGESIZE - (to_ipa - page);
+    if(n > len)
+      n = len;
+
+    memcpy((char *)pa, from, n);
+
+    from += n;
+    to_ipa += n;
+    len -= n;
+  }
+}
+
 u64 ipa2pa(u64 *pgt, u64 ipa) {
   u64 *pte = pagewalk(pgt, ipa, 0);
   if(!pte)

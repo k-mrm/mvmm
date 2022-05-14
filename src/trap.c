@@ -42,6 +42,8 @@ void hyp_irq_handler() {
   gic_host_eoi(irq, 1);
 }
 
+void virtio_dev_intr(struct vcpu *vcpu);
+
 void vm_irq_handler() {
   struct vcpu *vcpu = cur_vcpu();
 
@@ -51,7 +53,12 @@ void vm_irq_handler() {
   u32 pirq = iar & 0x3ff;
   u32 virq = pirq;
 
-  vmm_log("vm_irq_handler %d\n", iar);
+  // vmm_log("vm_irq_handler %d\n", iar);
+  
+  /* virtio */
+  if(pirq == 48) {
+    virtio_dev_intr(vcpu); 
+  }
 
   gic_guest_eoi(pirq, 1);
 
