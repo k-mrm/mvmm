@@ -65,11 +65,11 @@ void pageremap(u64 *pgt, u64 va, u64 pa, u64 size, u64 attr) {
 
 void copy_to_guest(u64 *pgt, u64 to_ipa, char *from, u64 len) {
   while(len > 0) {
-    u64 page = to_ipa & ~(PAGESIZE-1);
     u64 pa = ipa2pa(pgt, to_ipa);
     if(pa == 0)
       panic("a");
-    u64 n = PAGESIZE - (to_ipa - page);
+    u64 poff = to_ipa & (PAGESIZE-1);
+    u64 n = PAGESIZE - poff;
     if(n > len)
       n = len;
 
