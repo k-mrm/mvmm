@@ -121,7 +121,7 @@ static void psci_handler(struct vcpu *vcpu) {
   vpsci.x2 = vcpu->reg.x[2];
   vpsci.x3 = vcpu->reg.x[3];
 
-  u64 ret = vpsci_emulate(&vpsci);
+  u64 ret = vpsci_emulate(vcpu, &vpsci);
 
   vcpu->reg.x[0] = ret;
 }

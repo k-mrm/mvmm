@@ -2,6 +2,7 @@
 #define MVMM_VPSCI_H
 
 #include "types.h"
+#include "vcpu.h"
 
 #define PSCI_SYSTEM_OFF   0x84000008
 #define PSCI_SYSTEM_RESET   0x84000009
@@ -14,6 +15,6 @@ struct vpsci {
   u64 x3;
 };
 
-u64 vpsci_emulate(struct vpsci *vpsci);
+u64 vpsci_emulate(struct vcpu *vcpu, struct vpsci *vpsci);
 
 #endif
