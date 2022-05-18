@@ -16,31 +16,43 @@ void vectable();
 
 __attribute__((aligned(16))) char _stack[4096*NCPU];
 
-int vmm_init() {
-  uart_init();
-  vmm_log("mvmm booting...\n");
-  pmalloc_init();
-  pcpu_init();
-  gic_init();
-  gic_init_cpu(0);
-  vtimer_init();
-  s2mmu_init();
+volatile static int cpu0_ready;
 
-  write_sysreg(vbar_el2, (u64)vectable);
-
+static void hcr_setup() {
   u64 hcr = HCR_VM | HCR_SWIO | HCR_FMO | HCR_IMO |
             HCR_TWI | HCR_TWE | HCR_RW;
+
   write_sysreg(hcr_el2, hcr);
 
-  vmm_log("hcr_el2 %p\n", hcr);
-
   isb();
+}
 
-  pci_init();
+int vmm_init() {
+  if(cpuid() == 0) {
+    uart_init();
+    vmm_log("mvmm booting...\n");
+    pmalloc_init();
+    pcpu_init();
+    write_sysreg(vbar_el2, (u64)vectable);
+    gic_init();
+    gic_init_cpu(0);
+    vtimer_init();
+    s2mmu_init();
+    pci_init();
+    hcr_setup();
 
-  new_vm("hello", 1, hello.start, hello.size, 0x40000000, 128*1024*1024);
+    new_vm("hello", 2, hello.start, hello.size, 0x40000000, 128*1024*1024 /* 128 MiB */);
+    cpu0_ready = 1;
+  } else {
+    while(!cpu0_ready)
+      ;
+    write_sysreg(vbar_el2, (u64)vectable);
+    gic_init_cpu(0);
+    s2mmu_init();
+    hcr_setup();
+  }
 
-  enter_vcpu();
+  schedule();
 
   for(;;)
     ;

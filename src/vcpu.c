@@ -54,47 +54,13 @@ void free_vcpu(struct vcpu *vcpu) {
 
 void trapret(void);
 
-static void switch_vcpu(struct pcpu *pcpu, struct vcpu *vcpu) {
-  write_sysreg(vttbr_el2, vcpu->vm->vttbr);
-
-  restore_sysreg(vcpu);
-
-  gic_restore_state(&vcpu->gic);
-
-  /* enter vm */
-  trapret();
-
-  /* now unreachable */
-}
-
 void vcpu_ready(struct vcpu *vcpu) {
-  struct pcpu *pcpu = cur_pcpu();
+  vmm_log("vcpu ready %d\n", vcpu->cpuid);
 
   vcpu->state = READY;
-
-  struct vcpu **v = &pcpu->ready;
-  while(*v)
-    v = &(*v)->next;
-
-  *v = vcpu;
 }
 
-struct vcpu *schedule() {
-  struct pcpu *pcpu = cur_pcpu();
-
-  if(!pcpu->ready)
-    return NULL;
-
-  struct vcpu *vcpu = pcpu->ready;
-  pcpu->ready = vcpu->next;
-  vcpu->next = NULL;
-
-  return vcpu;
-}
-
-void enter_vcpu() {
-  struct vcpu *vcpu = schedule();
-
+static void switch_vcpu(struct vcpu *vcpu) {
   cur_pcpu()->vcpu = vcpu;
   write_sysreg(tpidr_el2, vcpu);
 
@@ -114,6 +80,7 @@ void enter_vcpu() {
 }
 
 /* vcpu gives up pcpu */
+/*
 void yield() {
   struct pcpu *p = cur_pcpu();
   struct vcpu *v = p->vcpu;
@@ -129,8 +96,8 @@ void yield() {
 
   enter_vcpu();
 }
+*/
 
-/*
 void schedule() {
   struct pcpu *pcpu = cur_pcpu();
 
@@ -143,7 +110,7 @@ void schedule() {
 
         vmm_log("cpu%d: entering vm `%s`\n", pcpu->cpuid, vcpu->vm->name);
 
-        switch_vcpu(pcpu, vcpu);
+        switch_vcpu(vcpu);
 
         pcpu->vcpu = NULL;
         write_sysreg(tpidr_el2, 0);
@@ -151,7 +118,6 @@ void schedule() {
     }
   }
 }
-*/
 
 static void save_sysreg(struct vcpu *vcpu) {
   read_sysreg(vcpu->sys.spsr_el1, spsr_el1);

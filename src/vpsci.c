@@ -16,6 +16,8 @@ static u64 vpsci_cpu_on(struct vcpu *vcpu, struct vpsci *vpsci) {
   struct vcpu *target = vcpu->vm->vcpus[target_cpu];
   target->reg.elr = ep_addr;
 
+  vcpu_ready(target);
+
   return 0;
 }
 
