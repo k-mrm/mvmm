@@ -3,10 +3,7 @@
 
 #include "types.h"
 #include "vcpu.h"
-
-#define PSCI_SYSTEM_OFF   0x84000008
-#define PSCI_SYSTEM_RESET   0x84000009
-#define PSCI_SYSTEM_CPUON   0xc4000003
+#include "psci.h"
 
 struct vpsci {
   u32 funcid;

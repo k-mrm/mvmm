@@ -16,7 +16,7 @@ void hyp_sync_handler() {
   u64 ec = (esr >> 26) & 0x3f;
   u64 iss = esr & 0x1ffffff;
 
-  vmm_log("%x %x %x %x\n", ec, iss, elr, far);
+  vmm_log("ec %p iss %p elr %p far %p\n", ec, iss, elr, far);
 
   panic("sync el2");
 }

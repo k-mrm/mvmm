@@ -10,13 +10,16 @@
 #include "vtimer.h"
 #include "pci.h"
 #include "log.h"
+#include "psci.h"
 
 extern struct guest hello;
+
+void _start(void);
 void vectable();
 
 __attribute__((aligned(16))) char _stack[4096*NCPU];
 
-volatile static int cpu0_ready;
+volatile static int cpu0_ready = 0;
 
 static void hcr_setup() {
   u64 hcr = HCR_VM | HCR_SWIO | HCR_FMO | HCR_IMO |
@@ -42,12 +45,19 @@ int vmm_init() {
     hcr_setup();
 
     new_vm("hello", 2, hello.start, hello.size, 0x40000000, 128*1024*1024 /* 128 MiB */);
+
+    for(int i = 1; i < NCPU; i++) {
+      vmm_log("okiro %d %p\n", i, _start);
+      psci_call(PSCI_SYSTEM_CPUON, i, (u64)_start, 0);
+    }
+    isb();
     cpu0_ready = 1;
   } else {
     while(!cpu0_ready)
       ;
+    vmm_log("cpu%d activated\n", cpuid());
     write_sysreg(vbar_el2, (u64)vectable);
-    gic_init_cpu(0);
+    gic_init_cpu(cpuid());
     s2mmu_init();
     hcr_setup();
   }

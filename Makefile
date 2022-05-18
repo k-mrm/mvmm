@@ -54,8 +54,9 @@ qemu: mvmm guest/xv6/fs.img
 	$(QEMU) --version
 	$(QEMU) $(QEMUOPTS) -drive file=guest/xv6/fs.img,if=none,format=raw,id=x0 -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
 
-gdb: mvmm
-	$(QEMU) -S -gdb tcp::1234 $(QEMUOPTS)
+gdb: mvmm guest/xv6/fs.img
+	$(QEMU) --version
+	$(QEMU) -S -gdb tcp::1234 $(QEMUOPTS) -drive file=guest/xv6/fs.img,if=none,format=raw,id=x0 -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
 
 dts:
 	$(QEMU) -S -cpu $(QCPU) -machine $(MACHINE),dumpdtb=virt.dtb -smp $(NCPU) -nographic

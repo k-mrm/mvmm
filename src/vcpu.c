@@ -153,6 +153,9 @@ static void restore_sysreg(struct vcpu *vcpu) {
 }
 
 void vcpu_dump(struct vcpu *vcpu) {
+  if(!vcpu)
+    return;
+
   vmm_log("vcpu register dump %p\n", vcpu);
   for(int i = 0; i < 31; i++) {
     printf("x%d %p ", i, vcpu->reg.x[i]);

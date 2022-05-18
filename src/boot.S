@@ -2,13 +2,22 @@
 
 .global _start
 _start:
-  mrs x1, mpidr_el1
-  and x1, x1, #3
-  cbz x1, vmm_start
-
-vmm_start:
   adrp x0, _stack
-  add x0, x0, #4096
+  mov x1, #4096
+  mrs x2, mpidr_el1
+  and x2, x2, #0xf
+  add x2, x2, 1
+  mul x1, x1, x2
+  add x0, x0, x1
   mov sp, x0
   bl vmm_init
+
+ /* spin */
   b .
+
+.section ".text"
+
+.global psci_call
+psci_call:
+  smc #0
+  ret
