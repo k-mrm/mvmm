@@ -64,10 +64,11 @@ void vgic_irq_enter(struct vcpu *vcpu) {
 }
 
 static void vgic_irq_enable(struct vcpu *vcpu, int vintid) {
-  vmm_log("enabled %d irq\n", vintid);
+  int cpu = cpuid();
+  vmm_log("cpu%d: enabled %d irq\n", cpu, vintid);
 
   if(is_sgi_ppi(vintid))
-    gic_irq_enable_redist(0, vintid);
+    gic_irq_enable_redist(cpu, vintid);
   else if(is_spi(vintid))
     gic_irq_enable(vintid);
   else

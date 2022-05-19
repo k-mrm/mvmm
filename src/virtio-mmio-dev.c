@@ -43,7 +43,7 @@ static int virtq_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_acces
   switch(descoff) {
     case offsetof(struct virtq_desc, addr):
       if(val) {
-        vmm_log("miiiiiii addr %p %p %p\n", val, ipa2pa(vcpu->vm->vttbr, val), mmio->accsize);
+        // vmm_log("miiiiiii addr %p %p %p\n", val, ipa2pa(vcpu->vm->vttbr, val), mmio->accsize);
         vtdev.ring[descn].ipa = val;
         val = ipa2pa(vcpu->vm->vttbr, val);
         vtdev.ring[descn].real_addr = val;
@@ -114,7 +114,7 @@ static int virtio_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio
       vmm_log("guest pagesize: %d\n", val);
       break;
     case VIRTIO_MMIO_QUEUE_NOTIFY:
-      vmm_log("queue notify val: %d\n", val);
+      // vmm_log("queue notify val: %d\n", val);
       break;
     case VIRTIO_MMIO_QUEUE_PFN: {
       u64 pfn_ipa = val << 12;
@@ -139,7 +139,7 @@ static int virtio_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio
 void virtio_dev_intr(struct vcpu *vcpu) {
   for(struct vtdev_desc *d = vtdev.ring; d < &vtdev.ring[NUM]; d++) {
     if(d->across_page) {
-      vmm_log("virtio_dev_intr: acrossing page detected\n");
+      // vmm_log("virtio_dev_intr: acrossing page detected\n");
       copy_to_guest(vcpu->vm->vttbr, d->ipa, (char *)d->real_addr, d->len);
 
       pfree((char *)d->real_addr);

@@ -175,7 +175,8 @@ void gic_set_igroup(u32 irq, u32 igrp) {
 }
 
 void gic_set_target(u32 irq, u8 target) {
-  vmm_log("settttttttttarget %d %d", irq, target);
+  vmm_log("settttttttttarget %d %d\n", irq, target);
+
   u32 itargetsr = gicd_r(GICD_ITARGETSR(irq / 4));
   itargetsr &= ~((u32)0xff << (irq % 4 * 8));
   gicd_w(GICD_ITARGETSR(irq / 4), itargetsr | (target << (irq % 4 * 8)));

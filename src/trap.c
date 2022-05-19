@@ -53,7 +53,7 @@ void vm_irq_handler() {
   u32 pirq = iar & 0x3ff;
   u32 virq = pirq;
 
-  // vmm_log("vm_irq_handler %d\n", iar);
+  // vmm_log("cpu%d: vm_irq_handler %d\n", cpuid(), iar);
   
   /* virtio */
   if(pirq == 48) {
@@ -100,7 +100,7 @@ int vm_dabort_handler(struct vcpu *vcpu, u64 iss, u64 far) {
     default: panic("?");
   }
 
-  vmm_log("dabort ipa %p %p %s %d byte r%d\n", ipa, elr, wnr? "write" : "read", 8 * accsz, r);
+  // vmm_log("dabort ipa %p %p %s %d byte r%d\n", ipa, elr, wnr? "write" : "read", 8 * accsz, r);
 
   struct mmio_access mmio = {
     .ipa = ipa,
@@ -108,22 +108,35 @@ int vm_dabort_handler(struct vcpu *vcpu, u64 iss, u64 far) {
     .wnr = wnr,
   };
 
-  if(mmio_emulate(vcpu, r, &mmio) < 0)
+  if(mmio_emulate(vcpu, r, &mmio) < 0) {
+    vmm_warn("dabort ipa: %p\n", ipa);
     return -1;
+  }
 
   return 0;
 }
 
-static void psci_handler(struct vcpu *vcpu) {
-  struct vpsci vpsci;
-  vpsci.funcid = (u32)vcpu->reg.x[0];
-  vpsci.x1 = vcpu->reg.x[1];
-  vpsci.x2 = vcpu->reg.x[2];
-  vpsci.x3 = vcpu->reg.x[3];
+static void vpsci_handler(struct vcpu *vcpu) {
+  struct vpsci vpsci = {
+    .funcid = (u32)vcpu->reg.x[0],
+    .x1 = vcpu->reg.x[1],
+    .x2 = vcpu->reg.x[2],
+    .x3 = vcpu->reg.x[3],
+  };
 
   u64 ret = vpsci_emulate(vcpu, &vpsci);
 
   vcpu->reg.x[0] = ret;
+}
+
+static int hvc_handler(struct vcpu *vcpu, int imm) {
+  switch(imm) {
+    case 0:
+      vpsci_handler(vcpu);
+      return 0;
+    default:
+      return -1;
+  }
 }
 
 void vm_sync_handler() {
@@ -144,19 +157,13 @@ void vm_sync_handler() {
       vcpu->reg.elr += 4;
       break;
     case 0x16:    /* hvc */
-      vmm_log("hvc %x\n", iss);
-      switch(iss) {
-        case 0:
-          psci_handler(vcpu);
-          break;
-        default:
-          panic("?");
-          break;
-      }
+      if(hvc_handler(vcpu, iss) < 0)
+        panic("unknown hvc #%d", iss);
+
       break;
     case 0x24:    /* data abort */
       if(vm_dabort_handler(vcpu, iss, far) < 0)
-        panic("dabort %x", iss);
+        panic("dabort %p %p", iss, far);
 
       vcpu->reg.elr += 4;
       break;
