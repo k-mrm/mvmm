@@ -72,6 +72,17 @@ static int virtq_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_acces
       }
       break;
     }
+    case offsetof(struct virtq_desc, flags): {
+      u16 flags = (u16)val;
+      if(!(flags & VRING_DESC_F_NEXT))
+        vtdev.ring[descn].next = NULL;
+      break;
+    }
+    case offsetof(struct virtq_desc, next): {
+      u16 next = (u16)val;
+      vtdev.ring[descn].next = &vtdev.ring[next];
+      break;
+    }
   }
 
 passthrough:
@@ -121,8 +132,8 @@ static int virtio_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio
     case VIRTIO_MMIO_QUEUE_PFN: {
       u64 pfn_ipa = val << 12;
       pagetrap(vcpu->vm, pfn_ipa, 0x2000, virtq_read, virtq_write);
-      val = (u64)&virtqueue >> 12;
-      vmm_log("queuepfn %p -> %p(%p)\n", pfn_ipa, &virtqueue, val);
+      val = (u64)virtqueue >> 12;
+      vmm_log("queuepfn %p -> %p(%p)\n", pfn_ipa, virtqueue, val);
       break;
     }
   }
@@ -139,14 +150,23 @@ static int virtio_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio
 }
 
 void virtio_dev_intr(struct vcpu *vcpu) {
-  for(struct vtdev_desc *d = vtdev.ring; d < &vtdev.ring[NUM]; d++) {
-    if(d->across_page) {
-      // vmm_log("virtio_dev_intr: acrossing page detected\n");
-      copy_to_guest(vcpu->vm->vttbr, d->ipa, (char *)d->real_addr, d->len);
+  struct virtq_used *used = (struct virtq_used *)(virtqueue + PAGESIZE);
+  vmm_log("usedring %p %d\n", used, used->idx);
 
-      pfree((char *)d->real_addr);
-      d->across_page = false;
-    }
+  while(vtdev.last_used_idx != used->idx) {
+    __sync_synchronize();
+    int id = used->ring[vtdev.last_used_idx % NUM].id;
+    struct vtdev_desc *d = &vtdev.ring[id];
+    for(; d; d = d->next)
+      if(d->across_page) {
+        vmm_log("hello\n");
+        copy_to_guest(vcpu->vm->vttbr, d->ipa, (char *)d->real_addr, d->len);
+
+        pfree((char *)d->real_addr);
+        d->across_page = false;
+      }
+
+    vtdev.last_used_idx++;
   }
 }
 
