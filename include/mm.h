@@ -91,6 +91,7 @@ void pageunmap(u64 *pgt, u64 va, u64 size);
 u64 ipa2pa(u64 *pgt, u64 ipa);
 
 void copy_to_guest(u64 *pgt, u64 to_ipa, char *from, u64 len);
+void copy_from_guest(u64 *pgt, char *to, u64 from_ipa, u64 len);
 
 void s2mmu_init(void);
 

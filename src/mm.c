@@ -81,6 +81,24 @@ void copy_to_guest(u64 *pgt, u64 to_ipa, char *from, u64 len) {
   }
 }
 
+void copy_from_guest(u64 *pgt, char *to, u64 from_ipa, u64 len) {
+  while(len > 0) {
+    u64 pa = ipa2pa(pgt, from_ipa);
+    if(pa == 0)
+      panic("a");
+    u64 poff = from_ipa & (PAGESIZE-1);
+    u64 n = PAGESIZE - poff;
+    if(n > len)
+      n = len;
+
+    memcpy(to, (char *)pa, n);
+
+    to += n;
+    from_ipa += n;
+    len -= n;
+  }
+}
+
 u64 ipa2pa(u64 *pgt, u64 ipa) {
   u64 *pte = pagewalk(pgt, ipa, 0);
   if(!pte)

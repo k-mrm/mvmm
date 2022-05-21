@@ -51,7 +51,6 @@ static int virtq_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_acces
         vtdev.ring[descn].ipa = 0;
         vtdev.ring[descn].real_addr = 0;
       }
-
       break;
     case offsetof(struct virtq_desc, len): {
       u32 len = (u32)val;
@@ -62,6 +61,7 @@ static int virtq_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_acces
       /* check acrossing pages */
       if(((daddr+len)>>12) > (daddr>>12)) {
         char *real = pmalloc();
+        copy_from_guest(vcpu->vm->vttbr, real, vtdev.ring[descn].ipa, len);
         vtdev.ring[descn].real_addr = (u64)real;
         vtdev.ring[descn].across_page = true;
 
@@ -111,6 +111,8 @@ static int virtio_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio
       vmm_log("queuenum %d\n", val);
       break;
     case VIRTIO_MMIO_GUEST_PAGE_SIZE:
+      if(val != PAGESIZE)
+        panic("unsupported");
       vmm_log("guest pagesize: %d\n", val);
       break;
     case VIRTIO_MMIO_QUEUE_NOTIFY:
@@ -143,6 +145,7 @@ void virtio_dev_intr(struct vcpu *vcpu) {
       copy_to_guest(vcpu->vm->vttbr, d->ipa, (char *)d->real_addr, d->len);
 
       pfree((char *)d->real_addr);
+      d->across_page = false;
     }
   }
 }

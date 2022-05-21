@@ -44,7 +44,7 @@ int vmm_init() {
     pci_init();
     hcr_setup();
 
-    new_vm("hello", 2, hello.start, hello.size, 0x40000000, 128*1024*1024 /* 128 MiB */);
+    new_vm("hello", 1, hello.start, hello.size, 0x40000000, 128*1024*1024 /* 128 MiB */);
 
     for(int i = 1; i < NCPU; i++) {
       vmm_log("okiro %d %p\n", i, _start);
