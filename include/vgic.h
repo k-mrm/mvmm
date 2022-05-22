@@ -40,4 +40,6 @@ struct vgic_cpu *new_vgic_cpu(int vcpuid);
 int vgic_forward_virq(struct vcpu *vcpu, u32 pirq, u32 virq, int grp);
 void vgic_restore_state(struct vgic_cpu *vgic);
 
+void vgic_init(void);
+
 #endif

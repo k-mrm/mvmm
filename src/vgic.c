@@ -17,6 +17,7 @@ extern int gic_lr_max;
 
 static struct vgic *allocvgic() {
   for(struct vgic *vgic = vgics; vgic < &vgics[VM_MAX]; vgic++) {
+    vmm_log("allocvgic %d\n", vgic->lock);
     acquire(&vgic->lock);
     if(vgic->used == 0) {
       vgic->used = 1;
@@ -31,6 +32,7 @@ static struct vgic *allocvgic() {
 }
 
 static struct vgic_cpu *allocvgic_cpu() {
+  vmm_log("allocvgic_cpu %d", vgic_cpus_lock);
   acquire(&vgic_cpus_lock);
 
   for(struct vgic_cpu *v = vgic_cpus; v < &vgic_cpus[VCPU_MAX]; v++) {
@@ -441,6 +443,7 @@ struct vgic_cpu *new_vgic_cpu(int vcpuid) {
 }
 
 void vgic_init() {
+  vmm_log("vgicinit");
   for(struct vgic *vgic = vgics; vgic < &vgics[VM_MAX]; vgic++) {
     spinlock_init(&vgic->lock);
   }

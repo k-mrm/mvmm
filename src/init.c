@@ -37,6 +37,7 @@ int vmm_init() {
     pmalloc_init();
     pcpu_init();
     write_sysreg(vbar_el2, (u64)vectable);
+    vgic_init();
     gic_init();
     gic_init_cpu(0);
     vtimer_init();
@@ -44,7 +45,7 @@ int vmm_init() {
     pci_init();
     hcr_setup();
 
-    new_vm("hello", 1, hello.start, hello.size, 0x40000000, 128*1024*1024 /* 128 MiB */);
+    new_vm("hello", 2, hello.start, hello.size, 0x40000000, 128*1024*1024 /* 128 MiB */);
 
     for(int i = 1; i < NCPU; i++) {
       vmm_log("okiro %d %p\n", i, _start);
