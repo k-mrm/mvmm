@@ -5,7 +5,7 @@
 #include "types.h"
 #include "log.h"
 
-// #define SPINLOCK_DEBUG
+#define SPINLOCK_DEBUG
 
 #ifdef SPINLOCK_DEBUG
 
@@ -45,7 +45,7 @@ static inline void __spinlock_init(spinlock_t *lk) {
 #endif  /* SPINLOCK_DEBUG */
 
 
-static inline void acquire(spinlock_t *lk) {
+static void acquire(spinlock_t *lk) {
 #ifdef SPINLOCK_DEBUG
   if(holdinglk(lk))
     panic("acquire@%s: already held", lk->name);

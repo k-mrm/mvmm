@@ -58,6 +58,8 @@ void vcpu_ready(struct vcpu *vcpu);
 
 void enter_vcpu(void);
 
+void vcpu_dump(struct vcpu *vcpu);
+
 static inline struct vcpu *cur_vcpu() {
   struct vcpu *vcpu;
   read_sysreg(vcpu, tpidr_el2);

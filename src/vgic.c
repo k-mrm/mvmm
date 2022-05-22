@@ -17,7 +17,6 @@ extern int gic_lr_max;
 
 static struct vgic *allocvgic() {
   for(struct vgic *vgic = vgics; vgic < &vgics[VM_MAX]; vgic++) {
-    vmm_log("allocvgic %d\n", vgic->lock);
     acquire(&vgic->lock);
     if(vgic->used == 0) {
       vgic->used = 1;
@@ -32,7 +31,6 @@ static struct vgic *allocvgic() {
 }
 
 static struct vgic_cpu *allocvgic_cpu() {
-  vmm_log("allocvgic_cpu %d", vgic_cpus_lock);
   acquire(&vgic_cpus_lock);
 
   for(struct vgic_cpu *v = vgic_cpus; v < &vgic_cpus[VCPU_MAX]; v++) {
@@ -152,13 +150,15 @@ static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_
   if(!(mmio->accsize & ACC_WORD))
     panic("unimplemented");
 
+  acquire(&vgic->lock);
+
   switch(offset) {
     case GICD_CTLR:
       *val = vgic->ctlr;
-      return 0;
+      goto end;
     case GICD_TYPER:
       *val = gicd_r(GICD_TYPER);
-      return 0;
+      goto end;
     case GICD_IGROUPR(0) ... GICD_IGROUPR(31)+3: {
       u32 igrp = 0;
 
@@ -169,7 +169,7 @@ static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_
       }
 
       *val = igrp;
-      return 0;
+      goto end;
     }
     case GICD_ISENABLER(0) ... GICD_ISENABLER(31)+3: {
       u32 iser = 0;
@@ -181,12 +181,12 @@ static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_
       }
 
       *val = iser;
-      return 0;
+      goto end;
     }
     case GICD_ICPENDR(0) ... GICD_ICPENDR(31)+3:
       vmm_warn("unimpl");
       *val = 0;
-      return 0;
+      goto end;
     case GICD_IPRIORITYR(0) ... GICD_IPRIORITYR(254)+3: {
       u32 ipr = 0;
 
@@ -197,7 +197,7 @@ static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_
       }
 
       *val = ipr;
-      return 0;
+      goto end;
     }
     case GICD_ITARGETSR(0) ... GICD_ITARGETSR(254)+3: {
       u32 itar = 0;
@@ -209,12 +209,18 @@ static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_
       }
 
       *val = itar;
-      return 0;
+      goto end;
     }
   }
 
-  vmm_warn("unhandled %p\n", offset);
+  vmm_warn("vgicd_mmio_read: unhandled %p\n", offset);
+
+  release(&vgic->lock);
   return -1;
+
+end:
+  release(&vgic->lock);
+  return 0;
 }
 
 static int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_access *mmio) {
@@ -279,7 +285,7 @@ static int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_
       return 0;
   }
 
-  vmm_warn("unhandled %p\n", offset);
+  vmm_warn("vgicd_mmio_write: unhandled %p\n", offset);
   return -1;
 
 readonly:
@@ -334,7 +340,7 @@ static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmi
       return 0;
   }
 
-  vmm_warn("unhandled %p\n", offset);
+  vmm_warn("vgicr_mmio_read: unhandled %p\n", offset);
   return -1;
 }
 
@@ -375,7 +381,7 @@ static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmi
       return 0;
   }
 
-  vmm_warn("unhandled %p\n", offset);
+  vmm_warn("vgicr_mmio_write: unhandled %p\n", offset);
   return -1;
 }
 
