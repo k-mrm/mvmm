@@ -22,7 +22,7 @@ static inline int holdinglk(spinlock_t *lk) {
     return 0;
 }
 
-#elif
+#else
 
 typedef u8 spinlock_t;
 
@@ -44,7 +44,7 @@ static inline void acquire(spinlock_t *lk) {
   );
 
   lk->cpuid = cpuid();
-#elif
+#else
   asm volatile(
     "mov x1, %0\n"
     "mov w2, #1\n"
@@ -66,8 +66,8 @@ static inline void release(spinlock_t *lk) {
 
   lk->cpuid = -1;
   asm volatile("str wzr, %0" : "=m"(lk->locked) :: "memory");
-#elif
-  asm volatile("str wzr, [%0]" : "=m"(lk) :: "memory");
+#else
+  asm volatile("str wzr, [%0]" : "=r"(lk) :: "memory");
 #endif
 
   isb();
@@ -75,10 +75,10 @@ static inline void release(spinlock_t *lk) {
 
 static inline void spinlock_init(spinlock_t *lk) {
 #ifdef SPINLOCK_DEBUG
-  *lk = 0;
-#elif SPINLOCK_DEBUG
   lk->cpuid = -1;
   lk->lock = 0;
+#else
+  *lk = 0;
 #endif
 }
 

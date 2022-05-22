@@ -55,7 +55,6 @@ static int virtq_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_acces
     case offsetof(struct virtq_desc, len): {
       u32 len = (u32)val;
       vtdev.ring[descn].len = len;
-      vtdev.ring[descn].across_page = false;
 
       u64 daddr = vtdev.ring[descn].real_addr;
       /* check acrossing pages */
@@ -151,7 +150,7 @@ static int virtio_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio
 
 void virtio_dev_intr(struct vcpu *vcpu) {
   struct virtq_used *used = (struct virtq_used *)(virtqueue + PAGESIZE);
-  vmm_log("usedring %p %d\n", used, used->idx);
+  // vmm_log("usedring %p %d\n", used, used->idx);
 
   while(vtdev.last_used_idx != used->idx) {
     __sync_synchronize();
@@ -159,7 +158,6 @@ void virtio_dev_intr(struct vcpu *vcpu) {
     struct vtdev_desc *d = &vtdev.ring[id];
     for(; d; d = d->next)
       if(d->across_page) {
-        vmm_log("hello\n");
         copy_to_guest(vcpu->vm->vttbr, d->ipa, (char *)d->real_addr, d->len);
 
         pfree((char *)d->real_addr);

@@ -9,17 +9,21 @@
 
 #define BIT(n)  (1<<(n))
 
-struct vgic vgics[VM_MAX];
-struct vgic_cpu vgic_cpus[VCPU_MAX];
+static struct vgic vgics[VM_MAX];
+static struct vgic_cpu vgic_cpus[VCPU_MAX];
+static spinlock_t vgic_cpus_lock;
 
 extern int gic_lr_max;
 
 static struct vgic *allocvgic() {
   for(struct vgic *vgic = vgics; vgic < &vgics[VM_MAX]; vgic++) {
+    acquire(&vgic->lock);
     if(vgic->used == 0) {
       vgic->used = 1;
+      release(&vgic->lock);
       return vgic;
     }
+    release(&vgic->lock);
   }
 
   vmm_warn("null vgic");
@@ -27,12 +31,17 @@ static struct vgic *allocvgic() {
 }
 
 static struct vgic_cpu *allocvgic_cpu() {
+  acquire(&vgic_cpus_lock);
+
   for(struct vgic_cpu *v = vgic_cpus; v < &vgic_cpus[VCPU_MAX]; v++) {
     if(v->used == 0) {
       v->used = 1;
+      release(&vgic_cpus_lock);
       return v;
     }
   }
+
+  release(&vgic_cpus_lock);
 
   vmm_warn("null vgic_cpu");
   return NULL;
@@ -429,4 +438,12 @@ struct vgic_cpu *new_vgic_cpu(int vcpuid) {
   }
 
   return vgic;
+}
+
+void vgic_init() {
+  for(struct vgic *vgic = vgics; vgic < &vgics[VM_MAX]; vgic++) {
+    spinlock_init(&vgic->lock);
+  }
+
+  spinlock_init(&vgic_cpus_lock);
 }

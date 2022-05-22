@@ -4,6 +4,7 @@
 #include "types.h"
 #include "param.h"
 #include "gic.h"
+#include "spinlock.h"
 
 struct vcpu;
 struct vm;
@@ -21,6 +22,8 @@ struct vgic {
   int nspis;
   u32 ctlr;     /* GICD_CTLR */
   struct vgic_irq *spis;
+
+  spinlock_t lock;
 };
 
 /* vgic cpu interface */
