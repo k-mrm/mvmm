@@ -62,11 +62,12 @@ struct virtio_blk_req {
 void virtio_mmio_init(struct vm *vm);
 
 struct vtdev_desc {
-  struct vtdev_desc *next;
   u64 ipa;
   u64 real_addr;
   u32 len;
-  bool across_page;
+  u16 next;
+  bool across_page: 1;
+  bool has_next: 1;
 };
 
 struct virtio_mmio_dev {

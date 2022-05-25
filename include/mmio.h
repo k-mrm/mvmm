@@ -13,6 +13,7 @@ enum mmio_accsize {
 
 struct mmio_access {
   u64 ipa;
+  u64 pc;
   enum mmio_accsize accsize;
   int wnr: 1;
 };

@@ -104,6 +104,7 @@ int vm_dabort_handler(struct vcpu *vcpu, u64 iss, u64 far) {
 
   struct mmio_access mmio = {
     .ipa = ipa,
+    .pc = elr,
     .accsize = accsz,
     .wnr = wnr,
   };

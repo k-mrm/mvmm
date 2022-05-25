@@ -7,10 +7,13 @@
 #include "pmalloc.h"
 #include "spinlock.h"
 
-struct virtio_mmio_dev vtdev = {0};
+#define R(r) ((volatile u32 *)(VIRTIO0 + (r)))
+
+static struct virtio_mmio_dev vtdev = {0};
 
 __attribute__((aligned(PAGESIZE)))
-char virtqueue[PAGESIZE*2] = {0};
+static char virtqueue[PAGESIZE*2] = {0};
+static spinlock_t vq_lock;
 
 static int virtq_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_access *mmio) {
   u32 desc_size = sizeof(struct virtq_desc) * vtdev.qnum;
@@ -18,9 +21,8 @@ static int virtq_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_acces
   if(offset >= desc_size)
     goto passthrough;
 
-  u64 descoff = offset % sizeof(struct virtq_desc); 
-
 passthrough:
+  // acquire(&vq_lock);
   switch(mmio->accsize) {
     case ACC_BYTE:        *val = *(u8 *)(&virtqueue[offset]); break;
     case ACC_HALFWORD:    *val = *(u16 *)(&virtqueue[offset]); break;
@@ -28,6 +30,7 @@ passthrough:
     case ACC_DOUBLEWORD:  *val = *(u64 *)(&virtqueue[offset]); break;
     default: panic("?");
   }
+  // release(&vq_lock);
 
   return 0;
 }
@@ -46,7 +49,7 @@ static int virtq_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_acces
       acquire(&vtdev.lock);
 
       if(val) {
-        vmm_log("%d miiiiiii addr %p %p %p\n", vcpu->cpuid, val, ipa2pa(vcpu->vm->vttbr, val), mmio->accsize);
+        // vmm_log("%d miiiiiii addr %p %p %p\n", vcpu->cpuid, val, ipa2pa(vcpu->vm->vttbr, val), mmio->accsize);
         vtdev.ring[descn].ipa = val;
         val = ipa2pa(vcpu->vm->vttbr, val);
         vtdev.ring[descn].real_addr = val;
@@ -64,6 +67,7 @@ static int virtq_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_acces
       vtdev.ring[descn].len = len;
 
       u64 daddr = vtdev.ring[descn].real_addr;
+      u64 iaddr = vtdev.ring[descn].ipa;
       /* check acrossing pages */
       if(((daddr+len)>>12) > (daddr>>12)) {
         char *real = pmalloc();
@@ -74,7 +78,9 @@ static int virtq_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_acces
         /* rewrite virtqueue */
         u64 daddr_offset =
           descn * sizeof(struct virtq_desc) + offsetof(struct virtq_desc, addr);
+        // acquire(&vq_lock);
         *(u64 *)(&virtqueue[daddr_offset]) = (u64)real;
+        // release(&vq_lock);
       }
 
       release(&vtdev.lock);
@@ -83,21 +89,22 @@ static int virtq_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_acces
     case offsetof(struct virtq_desc, flags): {
       u16 flags = (u16)val;
       acquire(&vtdev.lock);
-      if(!(flags & VRING_DESC_F_NEXT))
-        vtdev.ring[descn].next = NULL;
+      vtdev.ring[descn].has_next = !!(flags & VRING_DESC_F_NEXT);
       release(&vtdev.lock);
       break;
     }
     case offsetof(struct virtq_desc, next): {
       acquire(&vtdev.lock);
       u16 next = (u16)val;
-      vtdev.ring[descn].next = &vtdev.ring[next];
+      vtdev.ring[descn].next = next;
       release(&vtdev.lock);
       break;
     }
   }
 
+  // vmm_log("%d virtqwrite descn %p %d %d val %p %p %d\n", vcpu->cpuid, offset, descoff, descn, val, mmio->pc, mmio->accsize*8);
 passthrough:
+  // acquire(&vq_lock);
   switch(mmio->accsize) {
     case ACC_BYTE:        *(u8 *)(&virtqueue[offset]) = val; break;
     case ACC_HALFWORD:    *(u16 *)(&virtqueue[offset]) = val; break;
@@ -105,6 +112,7 @@ passthrough:
     case ACC_DOUBLEWORD:  *(u64 *)(&virtqueue[offset]) = val; break;
     default: panic("?");
   }
+  // release(&vq_lock);
 
   return 0;
 }
@@ -150,6 +158,9 @@ static int virtio_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio
       vmm_log("queuepfn %p -> %p(%p)\n", pfn_ipa, virtqueue, val);
       break;
     }
+    case VIRTIO_MMIO_INTERRUPT_ACK:
+      /* dummy */
+      return 0;
   }
 
   switch(mmio->accsize) {
@@ -165,15 +176,16 @@ static int virtio_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio
 
 void virtio_dev_intr(struct vcpu *vcpu) {
   struct virtq_used *used = (struct virtq_used *)(virtqueue + PAGESIZE);
-  vmm_log("------------- %d usedring %p %d\n", vcpu->cpuid, used, used->idx);
 
   acquire(&vtdev.lock);
+
+  *R(VIRTIO_MMIO_INTERRUPT_ACK) = *R(VIRTIO_MMIO_INTERRUPT_STATUS) & 0x3;
 
   while(vtdev.last_used_idx != used->idx) {
     __sync_synchronize();
     int id = used->ring[vtdev.last_used_idx % NUM].id;
-    struct vtdev_desc *d = &vtdev.ring[id];
-    for(; d; d = d->next)
+    struct vtdev_desc *d = &vtdev.ring[id]; 
+    while(d) {
       if(d->across_page) {
         copy_to_guest(vcpu->vm->vttbr, d->ipa, (char *)d->real_addr, d->len);
 
@@ -181,16 +193,24 @@ void virtio_dev_intr(struct vcpu *vcpu) {
         d->across_page = false;
       }
 
+      if(!d->has_next)
+        break;
+      id = d->next;
+      d = &vtdev.ring[d->next];
+      d->has_next = false;
+    }
+
     vtdev.last_used_idx++;
   }
 
   release(&vtdev.lock);
 
-  vmm_log("%d intr end -------------\n", vcpu->cpuid);
+  // vmm_log("%d intr end -------------\n", vcpu->cpuid);
 }
 
 void virtio_mmio_init(struct vm *vm) {
   pagetrap(vm, VIRTIO0, 0x1000, virtio_mmio_read, virtio_mmio_write);
 
   spinlock_init(&vtdev.lock);
+  spinlock_init(&vq_lock);
 }
