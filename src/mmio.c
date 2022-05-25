@@ -6,17 +6,24 @@
 #include "vcpu.h"
 #include "vm.h"
 #include "log.h"
+#include "spinlock.h"
 
-struct mmio_info mmio_infos[128];
+static struct mmio_info mmio_infos[128];
+static spinlock_t mi_lock;
 
 static struct mmio_info *alloc_mmio_info(struct mmio_info *prev) {
+  acquire(&mi_lock);
+
   for(struct mmio_info *m = mmio_infos; m < &mmio_infos[128]; m++) {
     if(m->size == 0) {
       m->size = 1;
       m->next = prev;
+      release(&mi_lock);
       return m;
     }
   }
+
+  release(&mi_lock);
 
   panic("nomem");
   return NULL;

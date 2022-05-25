@@ -2,6 +2,7 @@
 #define MVMM_VIRTIO_MMIO_H
 
 #include "types.h"
+#include "spinlock.h"
 
 struct vm;
 
@@ -72,6 +73,7 @@ struct virtio_mmio_dev {
   int qnum;
   u16 last_used_idx;
   struct vtdev_desc ring[NUM];
+  spinlock_t lock;
 };
 
 #endif
