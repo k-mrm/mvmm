@@ -49,14 +49,14 @@ struct vcpu {
   int cpuid;
 };
 
-extern struct vcpu vcpus[VCPU_MAX];
-
 struct vcpu *new_vcpu(struct vm *vm, int vcpuid, u64 entry);
 void free_vcpu(struct vcpu *vcpu);
 
 void vcpu_ready(struct vcpu *vcpu);
 
 void enter_vcpu(void);
+
+void vcpu_init(void);
 
 void vcpu_dump(struct vcpu *vcpu);
 

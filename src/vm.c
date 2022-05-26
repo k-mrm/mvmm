@@ -46,7 +46,7 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 al
     panic("img_size > allocated");
   if(allocated % PAGESIZE != 0)
     panic("invalid mem size");
-  if(ncpu >= VCPU_MAX)
+  if(ncpu > VCPU_MAX)
     panic("too many vcpu");
 
   struct vm *vm = allocvm();

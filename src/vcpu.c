@@ -5,19 +5,30 @@
 #include "pcpu.h"
 #include "log.h"
 #include "mm.h"
+#include "spinlock.h"
 
-struct vcpu vcpus[VCPU_MAX];
+static struct vcpu vcpus[VCPU_MAX];
+static spinlock_t vcpus_lk;
 
 static void save_sysreg(struct vcpu *vcpu);
 static void restore_sysreg(struct vcpu *vcpu);
 
+void vcpu_init() {
+  spinlock_init(&vcpus_lk);
+}
+
 static struct vcpu *allocvcpu() {
+  acquire(&vcpus_lk);
+
   for(struct vcpu *vcpu = vcpus; vcpu < &vcpus[VCPU_MAX]; vcpu++) {
     if(vcpu->state == UNUSED) {
       vcpu->state = CREATED;
+      release(&vcpus_lk);
       return vcpu;
     }
   }
+
+  release(&vcpus_lk);
 
   return NULL;
 }
@@ -64,6 +75,9 @@ static void switch_vcpu(struct vcpu *vcpu) {
   cur_pcpu()->vcpu = vcpu;
   write_sysreg(tpidr_el2, vcpu);
 
+  if(vcpu->cpuid != cpuid())
+    panic("cpu%d: illegal vcpu: %d", cpuid(), vcpu->cpuid);
+
   vcpu->state = RUNNING;
 
   write_sysreg(vttbr_el2, vcpu->vm->vttbr);
@@ -73,7 +87,7 @@ static void switch_vcpu(struct vcpu *vcpu) {
 
   isb();
 
-  vmm_log("enter vcpu enter %p\n", vcpu->reg.elr);
+  vmm_log("enter vcpu%d enter %p\n", vcpu->cpuid, vcpu->reg.elr);
 
   /* enter vm */
   trapret();
