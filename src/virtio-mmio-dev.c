@@ -184,8 +184,8 @@ void virtio_dev_intr(struct vcpu *vcpu) {
   while(vtdev.last_used_idx != used->idx) {
     __sync_synchronize();
     int id = used->ring[vtdev.last_used_idx % NUM].id;
-    struct vtdev_desc *d = &vtdev.ring[id]; 
-    while(d) {
+    for(;;) {
+      struct vtdev_desc *d = &vtdev.ring[id];
       if(d->across_page) {
         copy_to_guest(vcpu->vm->vttbr, d->ipa, (char *)d->real_addr, d->len);
 
@@ -196,16 +196,12 @@ void virtio_dev_intr(struct vcpu *vcpu) {
       if(!d->has_next)
         break;
       id = d->next;
-      d = &vtdev.ring[d->next];
-      d->has_next = false;
     }
 
     vtdev.last_used_idx++;
   }
 
   release(&vtdev.lock);
-
-  // vmm_log("%d intr end -------------\n", vcpu->cpuid);
 }
 
 void virtio_mmio_init(struct vm *vm) {

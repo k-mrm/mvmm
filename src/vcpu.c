@@ -77,26 +77,9 @@ static void switch_vcpu(struct vcpu *vcpu) {
 
   /* enter vm */
   trapret();
+
+  panic("unreachable");
 }
-
-/* vcpu gives up pcpu */
-/*
-void yield() {
-  struct pcpu *p = cur_pcpu();
-  struct vcpu *v = p->vcpu;
-
-  p->vcpu = NULL;
-  write_sysreg(tpidr_el2, 0);
-  write_sysreg(vttbr_el2, 0);
-
-  save_sysreg(v);
-  gic_save_state(&v->gic);
-
-  vcpu_ready(v);
-
-  enter_vcpu();
-}
-*/
 
 void schedule() {
   struct pcpu *pcpu = cur_pcpu();
