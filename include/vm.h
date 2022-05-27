@@ -4,6 +4,7 @@
 #include "types.h"
 #include "param.h"
 #include "vgic.h"
+#include "spinlock.h"
 
 struct mmio_access;
 struct mmio_info;
@@ -16,8 +17,8 @@ struct vm {
   struct vgic *vgic;
   struct mmio_info *pmap;
   int npmap;
-  u64 entry;
   int used;
+  spinlock_t lock;
 };
 
 extern struct vm vms[VM_MAX];

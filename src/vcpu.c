@@ -76,7 +76,7 @@ static void switch_vcpu(struct vcpu *vcpu) {
   write_sysreg(tpidr_el2, vcpu);
 
   if(vcpu->cpuid != cpuid())
-    panic("cpu%d: illegal vcpu: %d", cpuid(), vcpu->cpuid);
+    panic("cpu%d: illegal vcpu%d", cpuid(), vcpu->cpuid);
 
   vcpu->state = RUNNING;
 
@@ -95,25 +95,17 @@ static void switch_vcpu(struct vcpu *vcpu) {
   panic("unreachable");
 }
 
-void schedule() {
-  struct pcpu *pcpu = cur_pcpu();
+void enter_vcpu() {
+  int id = cpuid();
 
-  for(;;) {
-    for(struct vcpu *vcpu = vcpus; vcpu < &vcpus[VCPU_MAX]; vcpu++) {
-      if(vcpu->state == READY) {
-        pcpu->vcpu = vcpu;
-        write_sysreg(tpidr_el2, vcpu);
-        vcpu->state = RUNNING;
+  struct vcpu *vcpu = &vcpus[id];
 
-        vmm_log("cpu%d: entering vm `%s`\n", pcpu->cpuid, vcpu->vm->name);
+  if(vcpu->state != READY)
+    panic("uninitalized vcpu");
 
-        switch_vcpu(vcpu);
+  vmm_log("cpu%d: entering vcpu%d\n", cpuid(), vcpu->cpuid);
 
-        pcpu->vcpu = NULL;
-        write_sysreg(tpidr_el2, 0);
-      }
-    }
-  }
+  switch_vcpu(vcpu);
 }
 
 static void save_sysreg(struct vcpu *vcpu) {

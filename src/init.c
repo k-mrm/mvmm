@@ -48,8 +48,6 @@ int vmm_init() {
 
     new_vm("hello", 4, hello.start, hello.size, 0x40000000, 128*1024*1024 /* 128 MiB */);
 
-    for(int i = 1; i < NCPU; i++)
-      psci_call(PSCI_SYSTEM_CPUON, i, (u64)_start, 0);
     isb();
     cpu0_ready = 1;
   } else {
@@ -62,7 +60,7 @@ int vmm_init() {
     hcr_setup();
   }
 
-  schedule();
+  enter_vcpu();
 
   for(;;)
     ;

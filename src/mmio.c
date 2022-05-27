@@ -66,8 +66,10 @@ int mmio_reg_handler(struct vm *vm, u64 ipa, u64 size,
   if(size == 0)
     return -1;
 
+  acquire(&vm->lock);
   struct mmio_info *new = alloc_mmio_info(vm->pmap);
   vm->pmap = new;
+  release(&vm->lock);
 
   new->base = ipa;
   new->size = size;

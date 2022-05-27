@@ -53,11 +53,14 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 al
 
   strcpy(vm->name, name);
 
-  for(int i = 0; i < ncpu; i++)
-    vm->vcpus[i] = new_vcpu(vm, i, entry);
-  vm->nvcpu = ncpu;
+  /* cpu0 */
+  vm->vcpus[0] = new_vcpu(vm, 0, entry);
 
-  vm->entry = entry;
+  /* cpuN */
+  for(int i = 1; i < ncpu; i++)
+    vm->vcpus[i] = new_vcpu(vm, i, 0);
+
+  vm->nvcpu = ncpu;
 
   u64 *vttbr = pmalloc();
   if(!vttbr)
@@ -94,6 +97,8 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 al
   vm->vgic = new_vgic(vm);
 
   virtio_mmio_init(vm);
+
+  spinlock_init(&vm->lock);
 
   vcpu_ready(vm->vcpus[0]);
 }

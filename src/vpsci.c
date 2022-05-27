@@ -2,14 +2,16 @@
 #include "vpsci.h"
 #include "log.h"
 
+void _start(void);
+
 static u64 vpsci_cpu_on(struct vcpu *vcpu, struct vpsci *vpsci) {
   u64 target_cpu = vpsci->x1;
   u64 ep_addr = vpsci->x2;
   u64 contextid = vpsci->x3;
-  vmm_log("cpu%d on: entrypoint %p\n", target_cpu, ep_addr);
+  vmm_log("vcpu%d on: entrypoint %p\n", target_cpu, ep_addr);
 
   if(target_cpu >= vcpu->vm->nvcpu) {
-    vmm_warn("cpu%d wakeup failed\n", target_cpu);
+    vmm_warn("vcpu%d wakeup failed\n", target_cpu);
     return -1;
   }
 
@@ -17,6 +19,9 @@ static u64 vpsci_cpu_on(struct vcpu *vcpu, struct vpsci *vpsci) {
   target->reg.elr = ep_addr;
 
   vcpu_ready(target);
+
+  /* wakeup pcpu */
+  psci_call(PSCI_SYSTEM_CPUON, target_cpu, (u64)_start, 0);
 
   return 0;
 }
