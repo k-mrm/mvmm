@@ -2,6 +2,7 @@
 #include "uart.h"
 #include "aarch64.h"
 #include "vcpu.h"
+#include "lib.h"
 
 #define va_list __builtin_va_list
 #define va_start(v, l)  __builtin_va_start(v, l)
@@ -9,7 +10,12 @@
 #define va_end(v) __builtin_va_end(v)
 #define va_copy(d, s) __builtin_va_copy(d, s)
 
-static void printiu32(i32 num, int base, bool sign) {
+enum printopt {
+  PRINT_0X      = 1 << 0,
+  ZERO_PADDING  = 1 << 1,
+};
+
+static void printiu32(i32 num, int base, bool sign, int digit, enum printopt opt) {
   char buf[sizeof(num) * 8 + 1] = {0};
   char *end = buf + sizeof(buf);
   char *cur = end - 1;
@@ -30,10 +36,14 @@ static void printiu32(i32 num, int base, bool sign) {
   if(neg)
     *--cur = '-';
 
+  int len = strlen(cur);
+  while(digit-- > len)
+    uart_putc(' '); 
+
   uart_puts(cur);
 }
 
-static void printiu64(i64 num, int base, bool sign) {
+static void printiu64(i64 num, int base, bool sign, int digit, enum printopt opt) {
   char buf[sizeof(num) * 8 + 1] = {0};
   char *end = buf + sizeof(buf);
   char *cur = end - 1;
@@ -51,36 +61,62 @@ static void printiu64(i64 num, int base, bool sign) {
     *--cur = "0123456789abcdef"[unum % base];
   } while(unum /= base);
 
+  if(opt & PRINT_0X) {
+    *--cur = 'x';
+    *--cur = '0';
+  }
+
   if(neg)
     *--cur = '-';
 
+  int len = strlen(cur);
+  while(digit-- > len)
+    uart_putc(' '); 
+
   uart_puts(cur);
+}
+
+static bool isdigit(char c) {
+  return '0' <= c && c <= '9';
+}
+
+static const char *fetch_digit(const char *fmt, int *digit) {
+  int n = 0;
+
+  while(isdigit(*fmt)) {
+    n = n * 10 + *fmt++ - '0';
+  }
+
+  *digit = n;
+
+  return fmt;
 }
 
 static int vprintf(const char *fmt, va_list ap) {
   char *s;
   void *p;
+  int digit = 0;
 
-  for(int i = 0; fmt[i]; i++) {
-    char c = fmt[i];
+  for(; *fmt; fmt++) {
+    char c = *fmt;
     if(c == '%') {
-      c = fmt[++i];
+      fmt++;
+      /* %10d */
+      fmt = fetch_digit(fmt, &digit);
 
-      switch(c) {
+      switch(c = *fmt) {
         case 'd':
-          printiu32(va_arg(ap, i32), 10, true);
+          printiu32(va_arg(ap, i32), 10, true, digit, 0);
           break;
         case 'u':
-          printiu32(va_arg(ap, u32), 10, false);
+          printiu32(va_arg(ap, u32), 10, false, digit, 0);
           break;
         case 'x':
-          printiu64(va_arg(ap, u64), 16, false);
+          printiu64(va_arg(ap, u64), 16, false, digit, 0);
           break;
         case 'p':
           p = va_arg(ap, void *);
-          uart_putc('0');
-          uart_putc('x');
-          printiu64((u64)p, 16, false);
+          printiu64((u64)p, 16, false, digit, PRINT_0X);
           break;
         case 'c':
           uart_putc(va_arg(ap, int));
