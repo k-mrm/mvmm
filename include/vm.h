@@ -9,6 +9,7 @@
 struct mmio_access;
 struct mmio_info;
 struct vcpu;
+
 struct vm {
   char name[16];
   int nvcpu;

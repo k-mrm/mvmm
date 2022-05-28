@@ -103,7 +103,7 @@ void enter_vcpu() {
   if(vcpu->state != READY)
     panic("uninitalized vcpu");
 
-  vmm_log("cpu%d: entering vcpu%d\n", cpuid(), vcpu->cpuid);
+  vmm_log("cpu%d: entering vcpu%d\n", id, vcpu->cpuid);
 
   switch_vcpu(vcpu);
 }
