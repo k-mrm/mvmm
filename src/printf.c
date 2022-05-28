@@ -15,34 +15,6 @@ enum printopt {
   ZERO_PADDING  = 1 << 1,
 };
 
-static void printiu32(i32 num, int base, bool sign, int digit, enum printopt opt) {
-  char buf[sizeof(num) * 8 + 1] = {0};
-  char *end = buf + sizeof(buf);
-  char *cur = end - 1;
-  u32 unum;
-  bool neg = false;
-
-  if(sign && num < 0) {
-    unum = (u32)(-(num + 1)) + 1;
-    neg = true;
-  } else {
-    unum = (u32)num;
-  }
-
-  do {
-    *--cur = "0123456789abcdef"[unum % base];
-  } while(unum /= base);
-
-  if(neg)
-    *--cur = '-';
-
-  int len = strlen(cur);
-  while(digit-- > len)
-    uart_putc(' '); 
-
-  uart_puts(cur);
-}
-
 static void printiu64(i64 num, int base, bool sign, int digit, enum printopt opt) {
   char buf[sizeof(num) * 8 + 1] = {0};
   char *end = buf + sizeof(buf);
@@ -70,10 +42,16 @@ static void printiu64(i64 num, int base, bool sign, int digit, enum printopt opt
     *--cur = '-';
 
   int len = strlen(cur);
-  while(digit-- > len)
-    uart_putc(' '); 
-
+  if(digit > 0) {
+    while(digit-- > len)
+      uart_putc(' '); 
+  }
   uart_puts(cur);
+  if(digit < 0) {
+    digit = -digit;
+    while(digit-- > len)
+      uart_putc(' '); 
+  }
 }
 
 static bool isdigit(char c) {
@@ -81,13 +59,18 @@ static bool isdigit(char c) {
 }
 
 static const char *fetch_digit(const char *fmt, int *digit) {
-  int n = 0;
+  int n = 0, neg = 0;
+
+  if(*fmt == '-') {
+    fmt++;
+    neg = 1;
+  }
 
   while(isdigit(*fmt)) {
     n = n * 10 + *fmt++ - '0';
   }
 
-  *digit = n;
+  *digit = neg? -n : n;
 
   return fmt;
 }
@@ -106,10 +89,10 @@ static int vprintf(const char *fmt, va_list ap) {
 
       switch(c = *fmt) {
         case 'd':
-          printiu32(va_arg(ap, i32), 10, true, digit, 0);
+          printiu64(va_arg(ap, i32), 10, true, digit, 0);
           break;
         case 'u':
-          printiu32(va_arg(ap, u32), 10, false, digit, 0);
+          printiu64(va_arg(ap, u32), 10, false, digit, 0);
           break;
         case 'x':
           printiu64(va_arg(ap, u64), 16, false, digit, 0);

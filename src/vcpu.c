@@ -155,7 +155,7 @@ void vcpu_dump(struct vcpu *vcpu) {
 
   vmm_log("vcpu register dump %p\n", vcpu);
   for(int i = 0; i < 31; i++) {
-    printf("x%2d %16p  ", i, vcpu->reg.x[i]);
+    printf("x%-2d %16p  ", i, vcpu->reg.x[i]);
     if((i+1) % 4 == 0)
       printf("\n");
   }
