@@ -13,6 +13,7 @@
 #include "psci.h"
 
 extern struct guest hello;
+extern struct guest virt_dtb;
 
 void _start(void);
 void vectable();
@@ -46,7 +47,7 @@ int vmm_init() {
     pci_init();
     hcr_setup();
 
-    new_vm("hello", 4, hello.start, hello.size, 0x40000000, 128*1024*1024 /* 128 MiB */);
+    new_vm("hello", 1, hello.start, hello.size, 0x40000000, 128*1024*1024 /* 128 MiB */);
 
     isb();
     cpu0_ready = 1;

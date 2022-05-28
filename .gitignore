@@ -3,6 +3,7 @@
 *.elf
 *.img
 *.dts
+*.dtb
 
 mvmm
 guest/hello/hello

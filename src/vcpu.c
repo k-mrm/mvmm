@@ -52,6 +52,12 @@ struct vcpu *new_vcpu(struct vm *vm, int vcpuid, u64 entry) {
   vcpu->sys.sctlr_el1 = 0xc50838;
   vcpu->sys.cntfrq_el0 = 62500000;
 
+  if(vcpuid == 0) {
+    /* linux https://www.kernel.org/doc/Documentation/arm64/booting.txt */
+    vcpu->reg.x[0] = 0;     /* TODO: fdt address */
+    vcpu->reg.x[4] = entry; /* TODO: entry point */
+  }
+
   gic_init_state(&vcpu->gic);
 
   return vcpu;

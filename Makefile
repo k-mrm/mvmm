@@ -46,13 +46,19 @@ guest/xv6/kernel.img: guest/xv6/Makefile guest/xv6/kernel
 
 -include: *.d
 
-mvmm: $(OBJS) src/memory.ld guest/xv6/kernel.img guest/hello/hello.img
+mvmm: $(OBJS) src/memory.ld dtb guest/xv6/kernel.img #guest/linux/Image #guest/hello/hello.img
 	$(LD) -r -b binary guest/xv6/kernel.img -o xv6.o
-	$(LD) $(LDFLAGS) -T src/memory.ld -o $@ $(OBJS) xv6.o
+	# $(LD) -r -b binary guest/linux/Image -o image.o
+	$(LD) -r -b binary virt.dtb -o virt.dtb.o
+	$(LD) $(LDFLAGS) -T src/memory.ld -o $@ $(OBJS) xv6.o virt.dtb.o
 
 qemu: mvmm guest/xv6/fs.img
 	$(QEMU) --version
 	$(QEMU) $(QEMUOPTS) -drive file=guest/xv6/fs.img,if=none,format=raw,id=x0 -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
+
+qemu-linux: mvmm
+	$(QEMU) --version
+	$(QEMU) $(QEMUOPTS) -append "console=ttyAMA0"
 
 gdb: mvmm guest/xv6/fs.img
 	$(QEMU) --version
@@ -63,8 +69,11 @@ dts:
 	dtc -I dtb -O dts -o virt.dts virt.dtb
 	$(RM) virt.dtb
 
+dtb:
+	$(QEMU) -S -cpu $(QCPU) -machine $(MACHINE),dumpdtb=virt.dtb -smp $(NCPU) -nographic
+
 clean:
 	make -C guest clean
 	$(RM) $(OBJS) mvmm *.img *.o */*.d
 
-.PHONY: qemu gdb clean
+.PHONY: qemu qemu-linux gdb clean dts dtb
