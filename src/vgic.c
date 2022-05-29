@@ -159,6 +159,9 @@ static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_
     case GICD_TYPER:
       *val = gicd_r(GICD_TYPER);
       goto end;
+    case GICD_IIDR:
+      *val = gicd_r(GICD_IIDR);
+      goto end;
     case GICD_IGROUPR(0) ... GICD_IGROUPR(31)+3: {
       u32 igrp = 0;
 
@@ -235,6 +238,7 @@ static int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_
     case GICD_CTLR:
       vgic->ctlr = val;
       goto end;
+    case GICD_IIDR:
     case GICD_TYPER:
       goto readonly;
     case GICD_IGROUPR(0) ... GICD_IGROUPR(31)+3:
