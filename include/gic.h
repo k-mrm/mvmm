@@ -87,6 +87,7 @@
 
 #define GICR_CTLR           (0x0)
 #define GICR_WAKER          (0x14)
+#define GICR_PIDR2          (0xffe8)
 
 #define SGI_BASE  0x10000
 #define GICR_IGROUPR0       (SGI_BASE+0x80)
