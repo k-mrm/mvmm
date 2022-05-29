@@ -81,6 +81,7 @@
 #define GICD_IPRIORITYR(n)  (0x400 + (u64)(n) * 4)
 #define GICD_ITARGETSR(n)   (0x800 + (u64)(n) * 4)
 #define GICD_ICFGR(n)       (0xc00 + (u64)(n) * 4)
+#define GICD_PIDR2          (0xffe8)
 
 #define GICRBASEn(n)        (GICRBASE+(n)*0x20000)
 

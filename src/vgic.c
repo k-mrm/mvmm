@@ -184,7 +184,7 @@ static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_
       goto end;
     }
     case GICD_ICPENDR(0) ... GICD_ICPENDR(31)+3:
-      vmm_warn("unimpl");
+      vmm_warn("unimplemented\n");
       *val = 0;
       goto end;
     case GICD_IPRIORITYR(0) ... GICD_IPRIORITYR(254)+3: {
@@ -211,6 +211,9 @@ static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_
       *val = itar;
       goto end;
     }
+    case GICD_PIDR2:
+      *val = gicd_r(GICD_PIDR2);
+      goto end;
   }
 
   vmm_warn("vgicd_mmio_read: unhandled %p\n", offset);
@@ -231,10 +234,10 @@ static int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_
   switch(offset) {
     case GICD_CTLR:
       vgic->ctlr = val;
-      return 0;
+      goto end;
     case GICD_TYPER:
       goto readonly;
-    case GICD_IGROUPR(0) ... GICD_IGROUPR(31)+3: {
+    case GICD_IGROUPR(0) ... GICD_IGROUPR(31)+3:
       /*
       intid = (offset - GICD_IGROUPR(0)) / sizeof(u32) * 32;
       for(int i = 0; i < 32; i++) {
@@ -242,8 +245,7 @@ static int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_
         irq->igroup = (val >> i) & 0x1;
       }
       */
-      return 0;
-    }
+      goto end;
     case GICD_ISENABLER(0) ... GICD_ISENABLER(31)+3:
       intid = (offset - GICD_ISENABLER(0)) / sizeof(u32) * 32;
       for(int i = 0; i < 32; i++) {
@@ -253,7 +255,7 @@ static int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_
           vgic_irq_enable(vcpu, intid+i);
         }
       }
-      return 0;
+      goto end;
     case GICD_ICENABLER(0) ... GICD_ICENABLER(31)+3:
       intid = (offset - GICD_ISENABLER(0)) / sizeof(u32) * 32;
       for(int i = 0; i < 32; i++) {
@@ -263,10 +265,10 @@ static int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_
           vgic_irq_disable(vcpu, intid+i);
         }
       }
-      return 0;
+      goto end;
     case GICD_ICPENDR(0) ... GICD_ICPENDR(31)+3:
-      vmm_warn("unimpl");
-      return 0;
+      vmm_warn("unimplemented\n");
+      goto end;
     case GICD_IPRIORITYR(0) ... GICD_IPRIORITYR(254)+3:
       intid = (offset - GICD_IPRIORITYR(0)) / sizeof(u32) * 4;
       vmm_log("ipriority offset %p %d %d\n", offset, intid, val);
@@ -274,7 +276,7 @@ static int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_
         irq = vgic_get_irq(vcpu, intid+i);
         irq->priority = (val >> (i * 8)) & 0xff;
       }
-      return 0;
+      goto end;
     case GICD_ITARGETSR(0) ... GICD_ITARGETSR(254)+3:
       intid = (offset - GICD_ITARGETSR(0)) / sizeof(u32) * 4;
       for(int i = 0; i < 4; i++) {
@@ -282,13 +284,18 @@ static int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_
         irq->target = (val >> (i * 8)) & 0xff;
         vgic_set_target(vcpu, intid+i, irq->target);
       }
-      return 0;
+      goto end;
+    case GICD_PIDR2:
+      goto readonly;
   }
 
   vmm_warn("vgicd_mmio_write: unhandled %p\n", offset);
   return -1;
 
 readonly:
+  vmm_warn("vgicd_mmio_write: readonly register %p\n", offset);
+
+end:
   return 0;
 }
 
@@ -315,7 +322,7 @@ static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmi
       return 0;
     }
     case GICR_ICENABLER0:
-      vmm_warn("unimpl");
+      vmm_warn("unimplemented\n");
       *val = 0;
       return 0;
     case GICR_ICPENDR0:
@@ -365,7 +372,7 @@ static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmi
       return 0;
     case GICR_ICENABLER0:
     case GICR_ICPENDR0:
-      vmm_warn("unimpl");
+      vmm_warn("unimplemented\n");
       return 0;
     case GICR_IPRIORITYR(0) ... GICR_IPRIORITYR(7):
       intid = (offset - GICR_IPRIORITYR(0)) / sizeof(u32) * 4;
