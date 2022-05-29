@@ -155,18 +155,18 @@ void vcpu_dump(struct vcpu *vcpu) {
 
   vmm_log("vcpu register dump %p\n", vcpu);
   for(int i = 0; i < 31; i++) {
-    printf("x%-2d %16p  ", i, vcpu->reg.x[i]);
+    printf("x%-2d %18p  ", i, vcpu->reg.x[i]);
     if((i+1) % 4 == 0)
       printf("\n");
   }
   printf("\n");
-  printf("spsr_el2  %16p  elr_el2   %16p\n", vcpu->reg.spsr, vcpu->reg.elr);
-  printf("spsr_el1  %16p  elr_el1   %16p  mpdir_el1    %16p\n",
+  printf("spsr_el2  %18p  elr_el2   %18p\n", vcpu->reg.spsr, vcpu->reg.elr);
+  printf("spsr_el1  %18p  elr_el1   %18p  mpdir_el1    %18p\n",
          vcpu->sys.spsr_el1, vcpu->sys.elr_el1, vcpu->sys.mpidr_el1);
-  printf("midr_el1  %16p  sp_el0    %16p  sp_el1       %16p\n",
+  printf("midr_el1  %18p  sp_el0    %18p  sp_el1       %18p\n",
          vcpu->sys.midr_el1, vcpu->sys.sp_el0, vcpu->sys.sp_el1);
-  printf("ttbr0_el1 %16p  ttbr1_el1 %16p  tcr_el1      %16p\n",
+  printf("ttbr0_el1 %18p  ttbr1_el1 %18p  tcr_el1      %18p\n",
          vcpu->sys.ttbr0_el1, vcpu->sys.ttbr1_el1, vcpu->sys.tcr_el1);
-  printf("vbar_el1  %16p  sctlr_el1 %16p  cntv_ctl_el0 %16p\n",
+  printf("vbar_el1  %18p  sctlr_el1 %18p  cntv_ctl_el0 %18p\n",
          vcpu->sys.vbar_el1, vcpu->sys.sctlr_el1, vcpu->sys.cntv_ctl_el0);
 }
