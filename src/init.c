@@ -12,7 +12,8 @@
 #include "log.h"
 #include "psci.h"
 
-extern struct guest hello;
+// extern struct guest hello;
+extern struct guest linux_img;
 extern struct guest virt_dtb;
 
 void _start(void);
@@ -47,7 +48,7 @@ int vmm_init() {
     pci_init();
     hcr_setup();
 
-    new_vm("hello", 1, hello.start, hello.size, 0x40000000, 128*1024*1024 /* 128 MiB */);
+    new_vm(linux_img.name, 1, linux_img.start, linux_img.size, 0x40080000, 128*1024*1024, &virt_dtb);
 
     isb();
     cpu0_ready = 1;

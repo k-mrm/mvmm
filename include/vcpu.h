@@ -39,13 +39,15 @@ struct vcpu {
     u64 cntfrq_el0;
   } sys;
 
-  struct gic_state gic;
+  const char *name;
 
   enum vcpu_state state;
-  const char *name;
-  struct vm *vm;
-  struct vcpu *next;  /* ready queue */
+
+  struct gic_state gic;
   struct vgic_cpu *vgic;
+
+  struct vm *vm;
+
   int cpuid;
 };
 

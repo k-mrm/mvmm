@@ -54,8 +54,8 @@ struct vcpu *new_vcpu(struct vm *vm, int vcpuid, u64 entry) {
 
   if(vcpuid == 0) {
     /* linux https://www.kernel.org/doc/Documentation/arm64/booting.txt */
-    vcpu->reg.x[0] = 0;     /* TODO: fdt address */
-    vcpu->reg.x[4] = entry; /* TODO: entry point */
+    vcpu->reg.x[0] = vm->fdt;       /* fdt address */
+    vcpu->reg.x[4] = entry;         /* entry point */
   }
 
   gic_init_state(&vcpu->gic);

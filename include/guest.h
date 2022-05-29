@@ -4,6 +4,7 @@
 #include "types.h"
 
 struct guest {
+  char *name;
   u64 start;
   u64 size;
 };

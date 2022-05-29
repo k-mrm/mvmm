@@ -46,11 +46,11 @@ guest/xv6/kernel.img: guest/xv6/Makefile guest/xv6/kernel
 
 -include: *.d
 
-mvmm: $(OBJS) src/memory.ld dtb guest/xv6/kernel.img #guest/linux/Image #guest/hello/hello.img
+mvmm: $(OBJS) src/memory.ld dtb guest/linux/Image guest/xv6/kernel.img #guest/hello/hello.img
 	$(LD) -r -b binary guest/xv6/kernel.img -o xv6.o
-	# $(LD) -r -b binary guest/linux/Image -o image.o
+	$(LD) -r -b binary guest/linux/Image -o image.o
 	$(LD) -r -b binary virt.dtb -o virt.dtb.o
-	$(LD) $(LDFLAGS) -T src/memory.ld -o $@ $(OBJS) xv6.o virt.dtb.o
+	$(LD) $(LDFLAGS) -T src/memory.ld -o $@ $(OBJS) xv6.o image.o virt.dtb.o
 
 qemu: mvmm guest/xv6/fs.img
 	$(QEMU) --version

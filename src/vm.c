@@ -36,7 +36,8 @@ void pagetrap(struct vm *vm, u64 ipa, u64 size,
   tlb_flush();
 }
 
-void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 allocated) {
+void new_vm(char *name, int ncpu, u64 img_start, u64 img_size,
+            u64 entry, u64 allocated, struct guest *guest_fdt) {
   vmm_log("new vm `%s`\n", name);
   vmm_log("n vcpu: %d\n", ncpu);
   vmm_log("allocated ram: %d byte\n", allocated);
@@ -52,6 +53,8 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 al
   struct vm *vm = allocvm();
 
   strcpy(vm->name, name);
+
+  vm->fdt = 0x48400000;   /* fdt ipa */
 
   /* cpu0 */
   vm->vcpus[0] = new_vcpu(vm, 0, entry);
@@ -87,6 +90,16 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size, u64 entry, u64 al
       panic("ram");
 
     pagemap(vttbr, entry+p, (u64)page, PAGESIZE, S2PTE_NORMAL|S2PTE_RW);
+  }
+
+  /* map fdt image */
+  for(u64 d = 0; d < guest_fdt->size; d += PAGESIZE) {
+    char *page = pmalloc();
+    if(!page)
+      panic("fdt");
+
+    memcpy(page, (char *)guest_fdt->start+d, PAGESIZE);
+    pagemap(vttbr, vm->fdt+d, (u64)page, PAGESIZE, S2PTE_NORMAL|S2PTE_RW);
   }
 
   /* map peripheral */
