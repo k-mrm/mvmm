@@ -148,7 +148,7 @@ static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_
   struct vgic *vgic = vcpu->vm->vgic;
 
   if(!(mmio->accsize & ACC_WORD))
-    panic("%s: unimplemented", __func__);
+    panic("%s: unimplemented %d", __func__, mmio->accsize*8);
 
   acquire(&vgic->lock);
 
@@ -241,7 +241,7 @@ static int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_
   struct vgic *vgic = vcpu->vm->vgic;
 
   if(!(mmio->accsize & ACC_WORD))
-    panic("%s: unimplemented", __func__);
+    panic("%s: unimplemented %d %p", __func__, mmio->accsize*8, offset);
 
   switch(offset) {
     case GICD_CTLR:
@@ -323,7 +323,7 @@ static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmi
   struct vgic_irq *irq;
 
   if(!(mmio->accsize & ACC_WORD))
-    panic("%s: unimplemented", __func__);
+    panic("%s: unimplemented %d", __func__, mmio->accsize*8);
 
   switch(offset) {
     case GICR_CTLR:
@@ -381,7 +381,7 @@ static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmi
   struct vgic_irq *irq;
 
   if(!(mmio->accsize & ACC_WORD))
-    panic("%s: unimplemented", __func__);
+    panic("%s: unimplemented %d", __func__, mmio->accsize*8);
 
   switch(offset) {
     case GICR_CTLR:

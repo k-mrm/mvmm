@@ -6,11 +6,12 @@ _start:
   mov x1, #4096
   mrs x2, mpidr_el1
   and x2, x2, #0xf
-  add x2, x2, 1
-  mul x1, x1, x2
+  add x3, x2, 1
+  mul x1, x1, x3
   add x0, x0, x1
   mov sp, x0
-  bl vmm_init
+  cbz x2, vmm_init_cpu0
+  bl vmm_init_secondary
 
  /* spin */
   b .

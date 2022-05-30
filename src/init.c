@@ -32,38 +32,36 @@ static void hcr_setup() {
   isb();
 }
 
-int vmm_init() {
-  if(cpuid() == 0) {
-    uart_init();
-    vmm_log("mvmm booting...\n");
-    pmalloc_init();
-    pcpu_init();
-    write_sysreg(vbar_el2, (u64)vectable);
-    vgic_init();
-    gic_init();
-    gic_init_cpu(0);
-    vtimer_init();
-    vcpu_init();
-    s2mmu_init();
-    pci_init();
-    hcr_setup();
-
-    new_vm(linux_img.name, 1, linux_img.start, linux_img.size, 0x40080000, 128*1024*1024, &virt_dtb);
-
-    isb();
-    cpu0_ready = 1;
-  } else {
-    while(!cpu0_ready)
-      ;
-    vmm_log("cpu%d activated\n", cpuid());
-    write_sysreg(vbar_el2, (u64)vectable);
-    gic_init_cpu(cpuid());
-    s2mmu_init();
-    hcr_setup();
-  }
+int vmm_init_secondary() {
+  vmm_log("cpu%d activated\n", cpuid());
+  write_sysreg(vbar_el2, (u64)vectable);
+  gic_init_cpu(cpuid());
+  s2mmu_init();
+  hcr_setup();
 
   enter_vcpu();
 
-  for(;;)
-    ;
+  panic("unreachable");
+}
+
+int vmm_init_cpu0() {
+  uart_init();
+  vmm_log("mvmm booting...\n");
+  pmalloc_init();
+  pcpu_init();
+  write_sysreg(vbar_el2, (u64)vectable);
+  vgic_init();
+  gic_init();
+  gic_init_cpu(0);
+  vtimer_init();
+  vcpu_init();
+  s2mmu_init();
+  pci_init();
+  hcr_setup();
+
+  new_vm(linux_img.name, 1, linux_img.start, linux_img.size, 0x40080000, 128*1024*1024, &virt_dtb);
+
+  enter_vcpu();
+
+  panic("unreachable");
 }
