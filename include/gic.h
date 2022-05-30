@@ -78,6 +78,8 @@
 #define GICD_ICENABLER(n)   (0x180 + (u64)(n) * 4)
 #define GICD_ISPENDR(n)     (0x200 + (u64)(n) * 4)
 #define GICD_ICPENDR(n)     (0x280 + (u64)(n) * 4)
+#define GICD_ISACTIVER(n)   (0x300 + (u64)(n) * 4)
+#define GICD_ICACTIVER(n)   (0x380 + (u64)(n) * 4)
 #define GICD_IPRIORITYR(n)  (0x400 + (u64)(n) * 4)
 #define GICD_ITARGETSR(n)   (0x800 + (u64)(n) * 4)
 #define GICD_ICFGR(n)       (0xc00 + (u64)(n) * 4)

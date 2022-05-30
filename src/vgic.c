@@ -148,7 +148,7 @@ static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_
   struct vgic *vgic = vcpu->vm->vgic;
 
   if(!(mmio->accsize & ACC_WORD))
-    panic("unimplemented");
+    panic("%s: unimplemented", __func__);
 
   acquire(&vgic->lock);
 
@@ -186,7 +186,13 @@ static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_
       *val = iser;
       goto end;
     }
+    case GICD_ISPENDR(0) ... GICD_ISPENDR(31)+3:
     case GICD_ICPENDR(0) ... GICD_ICPENDR(31)+3:
+      vmm_warn("unimplemented\n");
+      *val = 0;
+      goto end;
+    case GICD_ISACTIVER(0) ... GICD_ISACTIVER(31)+3:
+    case GICD_ICACTIVER(0) ... GICD_ICACTIVER(31)+3:
       vmm_warn("unimplemented\n");
       *val = 0;
       goto end;
@@ -235,7 +241,7 @@ static int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_
   struct vgic *vgic = vcpu->vm->vgic;
 
   if(!(mmio->accsize & ACC_WORD))
-    panic("unimplemented");
+    panic("%s: unimplemented", __func__);
 
   switch(offset) {
     case GICD_CTLR:
@@ -273,12 +279,15 @@ static int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_
         }
       }
       goto end;
+    case GICD_ISPENDR(0) ... GICD_ISPENDR(31)+3:
     case GICD_ICPENDR(0) ... GICD_ICPENDR(31)+3:
+    case GICD_ISACTIVER(0) ... GICD_ISACTIVER(31)+3:
+    case GICD_ICACTIVER(0) ... GICD_ICACTIVER(31)+3:
       vmm_warn("unimplemented\n");
       goto end;
     case GICD_IPRIORITYR(0) ... GICD_IPRIORITYR(254)+3:
       intid = (offset - GICD_IPRIORITYR(0)) / sizeof(u32) * 4;
-      vmm_log("ipriority offset %p %d %p\n", offset, intid, val);
+      vmm_log("ipriority %d-%d %p\n", intid, intid+3, val);
       for(int i = 0; i < 4; i++) {
         irq = vgic_get_irq(vcpu, intid+i);
         irq->priority = (val >> (i * 8)) & 0xff;
@@ -314,7 +323,7 @@ static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmi
   struct vgic_irq *irq;
 
   if(!(mmio->accsize & ACC_WORD))
-    panic("unimplemented");
+    panic("%s: unimplemented", __func__);
 
   switch(offset) {
     case GICR_CTLR:
@@ -372,7 +381,7 @@ static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmi
   struct vgic_irq *irq;
 
   if(!(mmio->accsize & ACC_WORD))
-    panic("unimplemented");
+    panic("%s: unimplemented", __func__);
 
   switch(offset) {
     case GICR_CTLR:

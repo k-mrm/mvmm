@@ -153,6 +153,8 @@ void vcpu_dump(struct vcpu *vcpu) {
   if(!vcpu)
     return;
 
+  save_sysreg(vcpu);
+
   vmm_log("vcpu register dump %p\n", vcpu);
   for(int i = 0; i < 31; i++) {
     printf("x%-2d %18p  ", i, vcpu->reg.x[i]);
