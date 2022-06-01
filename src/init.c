@@ -56,7 +56,7 @@ int vmm_init_cpu0() {
   vtimer_init();
   vcpu_init();
   s2mmu_init();
-  pci_init();
+  // pci_init();
   hcr_setup();
 
   new_vm(linux_img.name, 1, linux_img.start, linux_img.size, 0x40080000, 128*1024*1024, &virt_dtb);

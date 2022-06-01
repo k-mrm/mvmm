@@ -218,6 +218,8 @@ static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_
       *val = itar;
       goto end;
     }
+    case GICD_ICFGR(0) ... GICD_ICFGR(63)+3:
+      goto unimplemented;
     case GICD_IROUTER(0) ... GICD_IROUTER(31)+3:
       goto reserved;
     case GICD_IROUTER(32) ... GICD_IROUTER(1019)+3:

@@ -58,7 +58,7 @@ qemu: mvmm guest/xv6/fs.img
 
 qemu-linux: mvmm
 	$(QEMU) --version
-	$(QEMU) $(QEMUOPTS) -append "console=ttyAMA0,earlyprintk=pl011,0x09000000"
+	$(QEMU) $(QEMUOPTS) -append "console=ttyAMA0"
 
 gdb: mvmm
 	$(QEMU) --version

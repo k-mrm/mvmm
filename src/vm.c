@@ -106,6 +106,9 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size,
   pagemap(vttbr, UARTBASE, UARTBASE, PAGESIZE, S2PTE_DEVICE|S2PTE_RW);
   pagemap(vttbr, GPIOBASE, GPIOBASE, PAGESIZE, S2PTE_DEVICE|S2PTE_RW);
   pagemap(vttbr, RTCBASE, RTCBASE, PAGESIZE, S2PTE_DEVICE|S2PTE_RW);
+  pagemap(vttbr, PCIE_ECAM_BASE, PCIE_ECAM_BASE, 256*1024*1024, S2PTE_DEVICE|S2PTE_RW);
+  pagemap(vttbr, PCIE_MMIO_BASE, PCIE_MMIO_BASE, 0x2eff0000, S2PTE_DEVICE|S2PTE_RW);
+  pagemap(vttbr, PCIE_HIGH_MMIO_BASE, PCIE_HIGH_MMIO_BASE, 0x10000/*XXX*/, S2PTE_DEVICE|S2PTE_RW);
 
   vm->vttbr = vttbr;
   vm->pmap = NULL;

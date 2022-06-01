@@ -205,7 +205,7 @@ void virtio_dev_intr(struct vcpu *vcpu) {
 }
 
 void virtio_mmio_init(struct vm *vm) {
-  pagetrap(vm, VIRTIO0, 0x1000, virtio_mmio_read, virtio_mmio_write);
+  pagetrap(vm, VIRTIO0, 0x10000, virtio_mmio_read, virtio_mmio_write);
 
   spinlock_init(&vtdev.lock);
   spinlock_init(&vq_lock);
