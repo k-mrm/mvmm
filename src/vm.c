@@ -104,6 +104,8 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size,
 
   /* map peripheral */
   pagemap(vttbr, UARTBASE, UARTBASE, PAGESIZE, S2PTE_DEVICE|S2PTE_RW);
+  pagemap(vttbr, GPIOBASE, GPIOBASE, PAGESIZE, S2PTE_DEVICE|S2PTE_RW);
+  pagemap(vttbr, RTCBASE, RTCBASE, PAGESIZE, S2PTE_DEVICE|S2PTE_RW);
 
   vm->vttbr = vttbr;
   vm->pmap = NULL;

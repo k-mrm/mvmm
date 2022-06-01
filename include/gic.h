@@ -89,6 +89,8 @@
 #define GICRBASEn(n)        (GICRBASE+(n)*0x20000)
 
 #define GICR_CTLR           (0x0)
+#define GICR_IIDR           (0x4)
+#define GICR_TYPER          (0x8)
 #define GICR_WAKER          (0x14)
 #define GICR_PIDR2          (0xffe8)
 
@@ -97,6 +99,8 @@
 #define GICR_ISENABLER0     (SGI_BASE+0x100)
 #define GICR_ICENABLER0     (SGI_BASE+0x180)
 #define GICR_ICPENDR0       (SGI_BASE+0x280)
+#define GICR_ISACTIVER0     (SGI_BASE+0x300)
+#define GICR_ICACTIVER0     (SGI_BASE+0x380)
 #define GICR_IPRIORITYR(n)  (SGI_BASE+0x400+(n)*4)
 #define GICR_ICFGR0         (SGI_BASE+0xc00)
 #define GICR_ICFGR1         (SGI_BASE+0xc04)

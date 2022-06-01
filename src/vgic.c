@@ -358,6 +358,12 @@ static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmi
       /* no op */
       *val = 0;
       return 0;
+    case GICR_IIDR:
+      *val = gicr_r32(vcpu->cpuid, GICR_IIDR);
+      return 0;
+    case GICR_TYPER:
+      *val = gicr_r32(vcpu->cpuid, GICR_TYPER);
+      return 0;
     case GICR_PIDR2:
       *val = gicr_r32(vcpu->cpuid, GICR_PIDR2);
       return 0;
@@ -375,6 +381,10 @@ static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmi
     case GICR_ICENABLER0:
       goto unimplemented;
     case GICR_ICPENDR0:
+      *val = 0;
+      return 0;
+    case GICR_ISACTIVER0:
+    case GICR_ICACTIVER0:
       *val = 0;
       return 0;
     case GICR_IPRIORITYR(0) ... GICR_IPRIORITYR(7): {
@@ -436,6 +446,10 @@ static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmi
       return 0;
     case GICR_ICENABLER0:
     case GICR_ICPENDR0:
+      goto unimplemented;
+      return 0;
+    case GICR_ISACTIVER0:
+    case GICR_ICACTIVER0:
       goto unimplemented;
       return 0;
     case GICR_IPRIORITYR(0) ... GICR_IPRIORITYR(7):
