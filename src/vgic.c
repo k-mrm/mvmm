@@ -147,8 +147,10 @@ static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_
   struct vgic_irq *irq;
   struct vgic *vgic = vcpu->vm->vgic;
 
+  /*
   if(!(mmio->accsize & ACC_WORD))
     panic("%s: unimplemented %d", __func__, mmio->accsize*8);
+    */
 
   acquire(&vgic->lock);
 
@@ -188,14 +190,10 @@ static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_
     }
     case GICD_ISPENDR(0) ... GICD_ISPENDR(31)+3:
     case GICD_ICPENDR(0) ... GICD_ICPENDR(31)+3:
-      vmm_warn("unimplemented\n");
-      *val = 0;
-      goto end;
+      goto unimplemented;
     case GICD_ISACTIVER(0) ... GICD_ISACTIVER(31)+3:
     case GICD_ICACTIVER(0) ... GICD_ICACTIVER(31)+3:
-      vmm_warn("unimplemented\n");
-      *val = 0;
-      goto end;
+      goto unimplemented;
     case GICD_IPRIORITYR(0) ... GICD_IPRIORITYR(254)+3: {
       u32 ipr = 0;
 
@@ -220,6 +218,10 @@ static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_
       *val = itar;
       goto end;
     }
+    case GICD_IROUTER(0) ... GICD_IROUTER(31)+3:
+      goto reserved;
+    case GICD_IROUTER(32) ... GICD_IROUTER(1019)+3:
+      goto unimplemented;
     case GICD_PIDR2:
       *val = gicd_r(GICD_PIDR2);
       goto end;
@@ -229,6 +231,16 @@ static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_
 
   release(&vgic->lock);
   return -1;
+
+reserved:
+  vmm_warn("read reserved\n");
+  *val = 0;
+  goto end;
+
+unimplemented:
+  vmm_warn("vgicd_mmio_read: unimplemented %p\n", offset);
+  *val = 0;
+  goto end;
 
 end:
   release(&vgic->lock);
@@ -240,8 +252,10 @@ static int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_
   struct vgic_irq *irq;
   struct vgic *vgic = vcpu->vm->vgic;
 
+  /*
   if(!(mmio->accsize & ACC_WORD))
     panic("%s: unimplemented %d %p", __func__, mmio->accsize*8, offset);
+    */
 
   switch(offset) {
     case GICD_CTLR:
@@ -283,8 +297,7 @@ static int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_
     case GICD_ICPENDR(0) ... GICD_ICPENDR(31)+3:
     case GICD_ISACTIVER(0) ... GICD_ISACTIVER(31)+3:
     case GICD_ICACTIVER(0) ... GICD_ICACTIVER(31)+3:
-      vmm_warn("unimplemented\n");
-      goto end;
+      goto unimplemented;
     case GICD_IPRIORITYR(0) ... GICD_IPRIORITYR(254)+3:
       intid = (offset - GICD_IPRIORITYR(0)) / sizeof(u32) * 4;
       vmm_log("ipriority %d-%d %p\n", intid, intid+3, val);
@@ -302,8 +315,11 @@ static int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_
       }
       goto end;
     case GICD_ICFGR(0) ... GICD_ICFGR(63)+3:
-      vmm_warn("unimplemented\n");
-      goto end;
+      goto unimplemented;
+    case GICD_IROUTER(0) ... GICD_IROUTER(31)+3:
+      goto reserved;
+    case GICD_IROUTER(32) ... GICD_IROUTER(1019)+3:
+      goto unimplemented;
     case GICD_PIDR2:
       goto readonly;
   }
@@ -313,6 +329,14 @@ static int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_
 
 readonly:
   vmm_warn("vgicd_mmio_write: readonly register %p\n", offset);
+  goto end;
+
+unimplemented:
+  vmm_warn("vgicd_mmio_write: unimplemented %p\n", offset);
+  goto end;
+
+reserved:
+  vmm_warn("vgicd_mmio_write: reserved %p\n", offset);
 
 end:
   return 0;
@@ -322,8 +346,10 @@ static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmi
   int intid;
   struct vgic_irq *irq;
 
+  /*
   if(!(mmio->accsize & ACC_WORD))
     panic("%s: unimplemented %d", __func__, mmio->accsize*8);
+    */
 
   switch(offset) {
     case GICR_CTLR:
@@ -347,9 +373,7 @@ static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmi
       return 0;
     }
     case GICR_ICENABLER0:
-      vmm_warn("unimplemented\n");
-      *val = 0;
-      return 0;
+      goto unimplemented;
     case GICR_ICPENDR0:
       *val = 0;
       return 0;
@@ -374,14 +398,24 @@ static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmi
 
   vmm_warn("vgicr_mmio_read: unhandled %p\n", offset);
   return -1;
+
+unimplemented:
+  vmm_warn("vgicr_mmio_read: unimplemented %p\n", offset);
+  *val = 0;
+  goto end;
+
+end:
+  return 0;
 }
 
 static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_access *mmio) {
   int intid;
   struct vgic_irq *irq;
 
+  /*
   if(!(mmio->accsize & ACC_WORD))
     panic("%s: unimplemented %d", __func__, mmio->accsize*8);
+    */
 
   switch(offset) {
     case GICR_CTLR:
@@ -402,7 +436,7 @@ static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmi
       return 0;
     case GICR_ICENABLER0:
     case GICR_ICPENDR0:
-      vmm_warn("unimplemented\n");
+      goto unimplemented;
       return 0;
     case GICR_IPRIORITYR(0) ... GICR_IPRIORITYR(7):
       intid = (offset - GICR_IPRIORITYR(0)) / sizeof(u32) * 4;
@@ -421,6 +455,9 @@ static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmi
   vmm_warn("vgicr_mmio_write: unhandled %p\n", offset);
   return -1;
 
+unimplemented:
+  vmm_warn("vgicr_mmio_write: unimplemented %p\n", offset);
+  return 0;
 readonly:
   vmm_warn("vgicr_mmio_write: readonly %p\n", offset);
   return 0;
