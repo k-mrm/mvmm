@@ -296,11 +296,11 @@ static int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_
     case GICD_ISPENDR(0) ... GICD_ISPENDR(31)+3:
     case GICD_ICPENDR(0) ... GICD_ICPENDR(31)+3:
     case GICD_ISACTIVER(0) ... GICD_ISACTIVER(31)+3:
-    case GICD_ICACTIVER(0) ... GICD_ICACTIVER(31)+3:
       goto unimplemented;
+    case GICD_ICACTIVER(0) ... GICD_ICACTIVER(31)+3:
+      goto end;
     case GICD_IPRIORITYR(0) ... GICD_IPRIORITYR(254)+3:
       intid = (offset - GICD_IPRIORITYR(0)) / sizeof(u32) * 4;
-      vmm_log("ipriority %d-%d %p\n", intid, intid+3, val);
       for(int i = 0; i < 4; i++) {
         irq = vgic_get_irq(vcpu, intid+i);
         irq->priority = (val >> (i * 8)) & 0xff;
@@ -332,7 +332,7 @@ readonly:
   goto end;
 
 unimplemented:
-  vmm_warn("vgicd_mmio_write: unimplemented %p\n", offset);
+  vmm_warn("vgicd_mmio_write: unimplemented %p %p\n", offset, val);
   goto end;
 
 reserved:
@@ -359,7 +359,7 @@ static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmi
       *val = 0;
       return 0;
     case GICR_PIDR2:
-      *val = 0;
+      *val = gicr_r32(vcpu->cpuid, GICR_PIDR2);
       return 0;
     case GICR_ISENABLER0: {
       u32 iser = 0; 

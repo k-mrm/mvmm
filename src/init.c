@@ -12,7 +12,7 @@
 #include "log.h"
 #include "psci.h"
 
-// extern struct guest hello;
+extern struct guest xv6_img;
 extern struct guest linux_img;
 extern struct guest virt_dtb;
 
@@ -60,6 +60,7 @@ int vmm_init_cpu0() {
   hcr_setup();
 
   new_vm(linux_img.name, 1, linux_img.start, linux_img.size, 0x40080000, 128*1024*1024, &virt_dtb);
+  // new_vm(xv6_img.name, 1, xv6_img.start, xv6_img.size, 0x40080000, 128*1024*1024, &virt_dtb);
 
   enter_vcpu();
 

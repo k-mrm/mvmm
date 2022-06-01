@@ -13,7 +13,7 @@ LDFLAGS = -nostdlib -nostartfiles
 #QEMUPREFIX = ~/qemu/build/
 QEMU = $(QEMUPREFIX)qemu-system-aarch64
 GIC_VERSION = 3
-MACHINE = virt,gic-version=$(GIC_VERSION),virtualization=on,its=on
+MACHINE = virt,gic-version=$(GIC_VERSION),virtualization=on
 ifndef NCPU
 NCPU = 1
 endif
@@ -50,7 +50,7 @@ mvmm: $(OBJS) src/memory.ld dtb guest/linux/Image guest/xv6/kernel.img #guest/he
 	$(LD) -r -b binary guest/xv6/kernel.img -o xv6.o
 	$(LD) -r -b binary guest/linux/Image -o image.o
 	$(LD) -r -b binary virt.dtb -o virt.dtb.o
-	$(LD) $(LDFLAGS) -T src/memory.ld -o $@ $(OBJS) xv6.o image.o virt.dtb.o
+	$(LD) $(LDFLAGS) -T src/memory.ld -o $@ $(OBJS) xv6.o virt.dtb.o image.o
 
 qemu: mvmm guest/xv6/fs.img
 	$(QEMU) --version
@@ -58,11 +58,17 @@ qemu: mvmm guest/xv6/fs.img
 
 qemu-linux: mvmm
 	$(QEMU) --version
-	$(QEMU) $(QEMUOPTS) -append "console=ttyAMA0"
+	$(QEMU) $(QEMUOPTS) -append "console=ttyAMA0,earlyprintk=pl011,0x09000000"
 
-gdb: mvmm guest/xv6/fs.img
+gdb: mvmm
 	$(QEMU) --version
-	$(QEMU) -S -gdb tcp::1234 $(QEMUOPTS) -drive file=guest/xv6/fs.img,if=none,format=raw,id=x0 -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
+	$(QEMU) $(QEMUOPTS) -append "console=ttyAMA0" -S -gdb tcp::1234 
+
+linux: guest/linux/Image
+	$(QEMU) -M virt,gic-version=3 -cpu cortex-a72 -kernel guest/linux/Image -nographic -append "console=ttyAMA0" -m 256
+
+linux-gdb: guest/linux/Image
+	$(QEMU) -M virt,gic-version=3 -cpu cortex-a72 -kernel guest/linux/Image -nographic -append "console=ttyAMA0" -m 256 -S -gdb tcp::1234
 
 dts:
 	$(QEMU) -S -cpu $(QCPU) -machine $(MACHINE),dumpdtb=virt.dtb -smp $(NCPU) -nographic

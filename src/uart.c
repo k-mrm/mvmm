@@ -1,6 +1,7 @@
 #include "memmap.h"
 #include "types.h"
 #include "uart.h"
+#include "vcpu.h"
 
 #define R(reg)  (volatile u32 *)(UARTBASE+reg)
 
@@ -49,8 +50,8 @@ void uartintr() {
       int c = uart_getc();
       if(c < 0)
         break;
-      uart_puts("hyp uartintr\n");
     }
+    vcpu_dump(cur_vcpu());
   }
 
   *R(ICR) = (1<<4);
@@ -61,5 +62,5 @@ void uart_init() {
   *R(IMSC) = 0;
   *R(LCRH) = LCRH_FEN | LCRH_WLEN_8BIT;
   *R(CR) = 0x301;   /* RXE, TXE, UARTEN */
-  // *R(IMSC) = (1<<4);
+  *R(IMSC) = (1<<4);
 }

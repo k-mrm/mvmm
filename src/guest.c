@@ -8,7 +8,7 @@ extern char _binary_virt_dtb_size[];
 extern char _binary_guest_linux_Image_start[];
 extern char _binary_guest_linux_Image_size[];
 
-struct guest hello = {
+struct guest xv6_img = {
   .name = "xv6",
   .start = (u64)_binary_guest_xv6_kernel_img_start,
   .size = (u64)_binary_guest_xv6_kernel_img_size,
