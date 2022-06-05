@@ -110,7 +110,7 @@ int vm_dabort_handler(struct vcpu *vcpu, u64 iss, u64 far) {
   };
 
   if(mmio_emulate(vcpu, r, &mmio) < 0) {
-    vmm_warn("dabort ipa: %p\n", ipa);
+    vmm_warn("dabort ipa: iss: %p ipa: %p va: %p\n", iss, ipa, far);
     return -1;
   }
 
@@ -140,6 +140,22 @@ static int hvc_handler(struct vcpu *vcpu, int imm) {
   }
 }
 
+static void dabort_iss_dump(u64 iss) {
+  printf("ISV  : %d\n", (iss >> 24) & 0x1);
+  printf("SAS  : %d\n", (iss >> 22) & 0x3);
+  printf("SSE  : %d\n", (iss >> 21) & 0x1);
+  printf("SRT  : %d\n", (iss >> 16) & 0x1f);
+  printf("SF   : %d\n", (iss >> 15) & 0x1);
+  printf("AR   : %d\n", (iss >> 14) & 0x1);
+  printf("VNCR : %d\n", (iss >> 13) & 0x1);
+  printf("FnV  : %d\n", (iss >> 10) & 0x1);
+  printf("EA   : %d\n", (iss >> 9) & 0x1);
+  printf("CM   : %d\n", (iss >> 8) & 0x1);
+  printf("S1PTW: %d\n", (iss >> 7) & 0x1);
+  printf("WnR  : %d\n", (iss >> 6) & 0x1);
+  printf("DFSC : %x\n", iss & 0x3f);
+}
+
 void vm_sync_handler() {
   struct vcpu *vcpu;
   read_sysreg(vcpu, tpidr_el2);
@@ -163,8 +179,10 @@ void vm_sync_handler() {
 
       break;
     case 0x24:    /* data abort */
-      if(vm_dabort_handler(vcpu, iss, far) < 0)
-        panic("dabort %p %p", iss, far);
+      if(vm_dabort_handler(vcpu, iss, far) < 0) {
+        dabort_iss_dump(iss);
+        panic("unexcepted dabort");
+      }
 
       vcpu->reg.elr += 4;
       break;
