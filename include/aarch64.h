@@ -51,5 +51,4 @@ static inline void tlb_flush() {
   isb();
 }
 
-
 #endif

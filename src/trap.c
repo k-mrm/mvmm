@@ -170,7 +170,7 @@ void vm_sync_handler() {
 
   switch(ec) {
     case 0x1:     /* WF* */
-      vmm_log("wf* trapped\n");
+      // vmm_log("wf* trapped\n");
       vcpu->reg.elr += 4;
       break;
     case 0x16:    /* hvc */

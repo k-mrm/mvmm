@@ -59,7 +59,7 @@ int vmm_init_cpu0() {
   // pci_init();
   hcr_setup();
 
-  new_vm(linux_img.name, 1, linux_img.start, linux_img.size, 0x40080000, 128*1024*1024, &virt_dtb);
+  new_vm(linux_img.name, 2, linux_img.start, linux_img.size, 0x40080000, 128*1024*1024, &virt_dtb);
   // new_vm(xv6_img.name, 1, xv6_img.start, xv6_img.size, 0x40080000, 128*1024*1024, &virt_dtb);
 
   enter_vcpu();

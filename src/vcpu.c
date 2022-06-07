@@ -98,11 +98,6 @@ static void switch_vcpu(struct vcpu *vcpu) {
 
   vcpu_dump(vcpu);
 
-  void dump_par_el1(u64 par);
-  dump_par_el1(vttbr_ipa2pa(0x40080000));
-  dump_par_el1(vttbr_ipa2pa(UARTBASE));
-  dump_par_el1(vttbr_ipa2pa(PCIE_HIGH_MMIO_BASE));
-
   /* enter vm */
   trapret();
 

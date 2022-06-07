@@ -110,11 +110,6 @@ void new_vm(char *name, int ncpu, u64 img_start, u64 img_size,
   pagemap(vttbr, PCIE_MMIO_BASE, PCIE_MMIO_BASE, 0x2eff0000, S2PTE_DEVICE|S2PTE_RW);
   pagemap(vttbr, PCIE_HIGH_MMIO_BASE, PCIE_HIGH_MMIO_BASE, 0x100000/*XXX*/, S2PTE_DEVICE|S2PTE_RW);
 
-  u64 a = ipa2pa(vttbr, PCIE_HIGH_MMIO_BASE);
-  vmm_log("a%p\n", a);
-  a = ipa2pa(vttbr, 0x40080000);
-  vmm_log("a%p\n", a);
-
   vm->vttbr = vttbr;
   vm->pmap = NULL;
   vm->vgic = new_vgic(vm);
