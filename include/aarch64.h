@@ -37,6 +37,13 @@ static inline int cpuid() {
   return mpidr & 0xf;
 }
 
+static inline u64 vttbr_ipa2pa(u64 ipa) {
+  u64 par;
+  asm volatile("at s12e1r, %0" :: "r"(ipa) : "memory");
+  read_sysreg(par, par_el1);
+  return par;
+}
+
 static inline void tlb_flush() {
   asm volatile("dsb ishst");
   asm volatile("tlbi vmalls12e1");

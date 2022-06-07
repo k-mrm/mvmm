@@ -5,7 +5,7 @@
 #include "printf.h"
 
 u64 *pagewalk(u64 *pgt, u64 va, int alloc) {
-  for(int level = 1; level < 3; level++) {
+  for(int level = 0; level < 3; level++) {
     u64 *pte = &pgt[PIDX(level, va)];
 
     if((*pte & PTE_VALID) && (*pte & PTE_TABLE)) {
@@ -108,9 +108,24 @@ u64 ipa2pa(u64 *pgt, u64 ipa) {
   return PTE_PA(*pte) + off;
 }
 
+void dump_par_el1(u64 par) {
+  if(par & 1) {
+    printf("translation fault\n");
+    printf("FST : %p\n", (par >> 1) & 0x3f);
+    printf("PTW : %p\n", (par >> 8) & 1);
+    printf("S   : %p\n", (par >> 9) & 1);
+  } else {
+    printf("address: %p\n", par);
+  }
+} 
+
 void s2mmu_init(void) {
-  u64 vtcr = VTCR_T0SZ(25) | VTCR_SH0(0) | VTCR_SL0(1) |
-             VTCR_TG0(0) | VTCR_NSW | VTCR_NSA | VTCR_PS(3);
+  u64 mmf;
+  read_sysreg(mmf, id_aa64mmfr0_el1);
+  printf("id_aa64mmfr0_el1.parange = %p\n", mmf & 0xf);
+
+  u64 vtcr = VTCR_T0SZ(20) | VTCR_SH0(0) | VTCR_SL0(2) |
+             VTCR_TG0(0) | VTCR_NSW | VTCR_NSA | VTCR_PS(4);
   write_sysreg(vtcr_el2, vtcr);
 
   u64 mair = (AI_DEVICE_nGnRnE << (8 * AI_DEVICE_nGnRnE_IDX)) | (AI_NORMAL_NC << (8 * AI_NORMAL_NC_IDX));
