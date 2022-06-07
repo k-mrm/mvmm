@@ -126,6 +126,7 @@ static void vpsci_handler(struct vcpu *vcpu) {
   };
 
   u64 ret = vpsci_emulate(vcpu, &vpsci);
+  vmm_log("vpsci return %p\n", ret);
 
   vcpu->reg.x[0] = ret;
 }
@@ -176,6 +177,15 @@ void vm_sync_handler() {
     case 0x16:    /* hvc */
       if(hvc_handler(vcpu, iss) < 0)
         panic("unknown hvc #%d", iss);
+
+      vcpu->reg.elr += 4;
+
+      break;
+    case 0x17:    /* smc */
+      if(hvc_handler(vcpu, iss) < 0)
+        panic("unknown smc #%d", iss);
+
+      vcpu->reg.elr += 4;
 
       break;
     case 0x24:    /* data abort */

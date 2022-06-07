@@ -27,6 +27,7 @@
 #define HCR_IMO   (1<<4)
 #define HCR_TWI   (1<<13)
 #define HCR_TWE   (1<<14)
+#define HCR_TSC   (1<<19)
 #define HCR_RW    (1<<31)
 
 #define HPFAR_FIPA_MASK   0xfffffffffff
