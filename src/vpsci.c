@@ -4,7 +4,7 @@
 
 void _start(void);
 
-static u64 vpsci_cpu_on(struct vcpu *vcpu, struct vpsci *vpsci) {
+static i32 vpsci_cpu_on(struct vcpu *vcpu, struct vpsci *vpsci) {
   u64 target_cpu = vpsci->x1;
   u64 ep_addr = vpsci->x2;
   u64 contextid = vpsci->x3;
@@ -24,11 +24,11 @@ static u64 vpsci_cpu_on(struct vcpu *vcpu, struct vpsci *vpsci) {
   return psci_call(PSCI_SYSTEM_CPUON, target_cpu, (u64)_start, 0);
 }
 
-u64 vpsci_version() {
+static u32 vpsci_version() {
   return psci_call(PSCI_VERSION, 0, 0, 0);
 }
 
-u64 vpsci_migrate_info_type() {
+static i32 vpsci_migrate_info_type() {
   return psci_call(PSCI_MIGRATE_INFO_TYPE, 0, 0, 0);
 }
 
@@ -37,7 +37,7 @@ u64 vpsci_emulate(struct vcpu *vcpu, struct vpsci *vpsci) {
     case PSCI_VERSION:
       return vpsci_version();
     case PSCI_MIGRATE_INFO_TYPE:
-      return vpsci_migrate_info_type();
+      return (i64)vpsci_migrate_info_type();
     case PSCI_SYSTEM_OFF:
       /* TODO: shutdown vm */
       break;
@@ -45,7 +45,7 @@ u64 vpsci_emulate(struct vcpu *vcpu, struct vpsci *vpsci) {
       /* TODO: reboot vm */
       break;
     case PSCI_SYSTEM_CPUON:
-      return vpsci_cpu_on(vcpu, vpsci);
+      return (i64)vpsci_cpu_on(vcpu, vpsci);
     default:
       panic("unknown funcid: %p\n", vpsci->funcid);
       return -1;

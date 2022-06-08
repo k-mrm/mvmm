@@ -45,6 +45,7 @@ void create_vm(struct vmconfig *vmcfg) {
   vmm_log("n vcpu: %d\n", vmcfg->nvcpu);
   vmm_log("allocated ram: %d byte\n", vmcfg->nallocate);
   vmm_log("img_start %p img_size %p byte\n", guest->start, guest->size);
+  vmm_log("fdt_start %p fdt_size %p byte\n", fdt->start, fdt->size);
   vmm_log("initrd_start %p initrd_size %p byte\n", initrd->start, initrd->size);
 
   if(guest->size > vmcfg->nallocate)
@@ -58,7 +59,8 @@ void create_vm(struct vmconfig *vmcfg) {
 
   strcpy(vm->name, guest->name);
 
-  vm->fdt = 0x48400000;   /* fdt ipa */
+  /* set fdt ipa */
+  vm->fdt = 0x44400000;
 
   /* cpu0 */
   vm->vcpus[0] = new_vcpu(vm, 0, vmcfg->entrypoint);
@@ -98,25 +100,10 @@ void create_vm(struct vmconfig *vmcfg) {
 
   vmm_log("entrypoint+p %p\n", vmcfg->entrypoint+p);
 
-  /* map fdt image */
-  for(u64 d = 0; d < fdt->size; d += PAGESIZE) {
-    char *page = kalloc();
-    if(!page)
-      panic("fdt");
-
-    memcpy(page, (char *)fdt->start+d, PAGESIZE);
-    pagemap(vttbr, vm->fdt+d, (u64)page, PAGESIZE, S2PTE_NORMAL|S2PTE_RW);
-  }
-
   /* map initrd image */
-  for(u64 f = 0; f < initrd->size; f += PAGESIZE) {
-    char *page = kalloc();
-    if(!page)
-      panic("fdt");
-
-    memcpy(page, (char *)initrd->start+f, PAGESIZE);
-    pagemap(vttbr, 0x48000000+f, (u64)page, PAGESIZE, S2PTE_NORMAL|S2PTE_RW);
-  }
+  copy_to_guest(vttbr, 0x44000000, (char *)initrd->start, initrd->size);
+  /* map fdt image */
+  copy_to_guest(vttbr, vm->fdt, (char *)fdt->start, fdt->size);
 
   /* map peripheral */
   pagemap(vttbr, UARTBASE, UARTBASE, PAGESIZE, S2PTE_DEVICE|S2PTE_RW);

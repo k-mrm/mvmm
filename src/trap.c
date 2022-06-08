@@ -178,14 +178,10 @@ void vm_sync_handler() {
       if(hvc_handler(vcpu, iss) < 0)
         panic("unknown hvc #%d", iss);
 
-      vcpu->reg.elr += 4;
-
       break;
     case 0x17:    /* smc */
       if(hvc_handler(vcpu, iss) < 0)
         panic("unknown smc #%d", iss);
-
-      vcpu->reg.elr += 4;
 
       break;
     case 0x24:    /* data abort */

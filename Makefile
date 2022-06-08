@@ -61,22 +61,22 @@ qemu-linux: mvmm
 	$(QEMU) --version
 	$(QEMU) $(QEMUOPTS) -initrd guest/linux/rootfs.img -append "console=ttyAMA0"
 
-gdb: mvmm
+qemu-gdb: mvmm
 	$(QEMU) --version
 	$(QEMU) $(QEMUOPTS) -initrd guest/linux/rootfs.img -append "console=ttyAMA0" -S -gdb tcp::1234 
 
 linux: guest/linux/Image
-	$(QEMU) -M virt,gic-version=3 -cpu cortex-a72 -kernel guest/linux/Image -nographic -append "console=ttyAMA0" -m 256
+	$(QEMU) -M virt,gic-version=3 -cpu cortex-a72 -kernel guest/linux/Image -nographic -append "console=ttyAMA0" -m 128
 
 linux-gdb: guest/linux/Image
-	$(QEMU) -M virt,gic-version=3 -cpu cortex-a72 -kernel guest/linux/Image -nographic -append "console=ttyAMA0" -m 256 -S -gdb tcp::1234
+	$(QEMU) -M virt,gic-version=3 -cpu cortex-a72 -kernel guest/linux/Image -initrd guest/linux/rootfs.img -nographic -append "console=ttyAMA0" -m 128 -S -gdb tcp::1234
 
 dts:
-	$(QEMU) -M virt,gic-version=3,dumpdtb=virt.dtb -cpu cortex-a72 -kernel guest/linux/Image -initrd guest/linux/rootfs.img -nographic -append "console=ttyAMA0" -m 256
+	$(QEMU) -M virt,gic-version=3,dumpdtb=virt.dtb -cpu cortex-a72 -kernel guest/linux/Image -initrd guest/linux/rootfs.img -nographic -append "console=ttyAMA0" -m 128
 	dtc -I dtb -O dts -o virt.dts virt.dtb
 
 dtb:
-	$(QEMU) -S -cpu $(QCPU) -machine $(MACHINE),dumpdtb=virt.dtb -smp $(NCPU) -nographic
+	$(QEMU) -M virt,gic-version=3,dumpdtb=virt.dtb -cpu cortex-a72 -kernel guest/linux/Image -initrd guest/linux/rootfs.img -nographic -append "console=ttyAMA0" -m 128
 
 clean:
 	make -C guest clean
