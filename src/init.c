@@ -1,6 +1,6 @@
 #include "uart.h"
 #include "aarch64.h"
-#include "pmalloc.h"
+#include "kalloc.h"
 #include "guest.h"
 #include "vm.h"
 #include "pcpu.h"
@@ -15,6 +15,7 @@
 extern struct guest xv6_img;
 extern struct guest linux_img;
 extern struct guest virt_dtb;
+extern struct guest rootfs_img;
 
 void _start(void);
 void vectable();
@@ -47,7 +48,7 @@ int vmm_init_secondary() {
 int vmm_init_cpu0() {
   uart_init();
   vmm_log("mvmm booting...\n");
-  pmalloc_init();
+  kalloc_init();
   pcpu_init();
   write_sysreg(vbar_el2, (u64)vectable);
   vgic_init();
@@ -59,8 +60,16 @@ int vmm_init_cpu0() {
   // pci_init();
   hcr_setup();
 
-  new_vm(linux_img.name, 2, linux_img.start, linux_img.size, 0x40080000, 128*1024*1024, &virt_dtb);
-  // new_vm(xv6_img.name, 1, xv6_img.start, xv6_img.size, 0x40080000, 128*1024*1024, &virt_dtb);
+  struct vmconfig vmcfg = {
+    .guest_img = &linux_img,
+    .fdt_img = &virt_dtb,
+    .initrd_img = &rootfs_img,
+    .nvcpu = 2,
+    .nallocate = 128 * 1024 * 1024,
+    .entrypoint = 0x40080000,
+  };
+
+  create_vm(&vmcfg);
 
   enter_vcpu();
 

@@ -18,7 +18,7 @@ ifndef NCPU
 NCPU = 1
 endif
 
-OBJS = src/boot.o src/init.o src/uart.o src/lib.o src/pmalloc.o src/printf.o src/vcpu.o \
+OBJS = src/boot.o src/init.o src/uart.o src/lib.o src/kalloc.o src/printf.o src/vcpu.o \
 			 src/vm.o src/mm.o src/vector.o src/guest.o src/trap.o src/pcpu.o src/vgic.o \
 			 src/gic.o src/mmio.o src/vtimer.o src/pci.o src/virtio-pci.o src/vpsci.o \
 			 src/virtio-mmio-dev.o src/spinlock.o
@@ -46,11 +46,12 @@ guest/xv6/kernel.img: guest/xv6/Makefile guest/xv6/kernel
 
 -include: *.d
 
-mvmm: $(OBJS) src/memory.ld dtb guest/linux/Image guest/xv6/kernel.img #guest/hello/hello.img
+mvmm: $(OBJS) src/memory.ld dtb guest/linux/Image guest/linux/rootfs.img guest/xv6/kernel.img #guest/hello/hello.img
 	$(LD) -r -b binary guest/xv6/kernel.img -o xv6.o
 	$(LD) -r -b binary guest/linux/Image -o image.o
+	$(LD) -r -b binary guest/linux/rootfs.img -o rootfs.img.o
 	$(LD) -r -b binary virt.dtb -o virt.dtb.o
-	$(LD) $(LDFLAGS) -T src/memory.ld -o $@ $(OBJS) xv6.o virt.dtb.o image.o
+	$(LD) $(LDFLAGS) -T src/memory.ld -o $@ $(OBJS) xv6.o virt.dtb.o rootfs.img.o image.o
 
 qemu: mvmm guest/xv6/fs.img
 	$(QEMU) --version
@@ -58,11 +59,11 @@ qemu: mvmm guest/xv6/fs.img
 
 qemu-linux: mvmm
 	$(QEMU) --version
-	$(QEMU) $(QEMUOPTS) -append "console=ttyAMA0"
+	$(QEMU) $(QEMUOPTS) -initrd guest/linux/rootfs.img -append "console=ttyAMA0"
 
 gdb: mvmm
 	$(QEMU) --version
-	$(QEMU) $(QEMUOPTS) -append "console=ttyAMA0" -S -gdb tcp::1234 
+	$(QEMU) $(QEMUOPTS) -initrd guest/linux/rootfs.img -append "console=ttyAMA0" -S -gdb tcp::1234 
 
 linux: guest/linux/Image
 	$(QEMU) -M virt,gic-version=3 -cpu cortex-a72 -kernel guest/linux/Image -nographic -append "console=ttyAMA0" -m 256
@@ -71,9 +72,8 @@ linux-gdb: guest/linux/Image
 	$(QEMU) -M virt,gic-version=3 -cpu cortex-a72 -kernel guest/linux/Image -nographic -append "console=ttyAMA0" -m 256 -S -gdb tcp::1234
 
 dts:
-	$(QEMU) -S -cpu $(QCPU) -machine $(MACHINE),dumpdtb=virt.dtb -smp $(NCPU) -nographic
+	$(QEMU) -M virt,gic-version=3,dumpdtb=virt.dtb -cpu cortex-a72 -kernel guest/linux/Image -initrd guest/linux/rootfs.img -nographic -append "console=ttyAMA0" -m 256
 	dtc -I dtb -O dts -o virt.dts virt.dtb
-	$(RM) virt.dtb
 
 dtb:
 	$(QEMU) -S -cpu $(QCPU) -machine $(MACHINE),dumpdtb=virt.dtb -smp $(NCPU) -nographic

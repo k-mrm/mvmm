@@ -6,8 +6,10 @@
 *.dtb
 *.gdb
 
+tags
 mvmm
 guest/hello/hello
 guest/xv6/kernel
 Image
 memos/
+*.out

@@ -1,7 +1,7 @@
 #include "pci.h"
 #include "virtio-pci.h"
 #include "log.h"
-#include "pmalloc.h"
+#include "kalloc.h"
 #include "lib.h"
 
 static void desc_init(struct virtq *vq) {
@@ -46,9 +46,9 @@ static void free_desc(struct virtq *vq, u16 n) {
 static void virtq_init(struct virtq *vq) {
   memset(vq, 0, sizeof(*vq));
 
-  vq->desc = pmalloc();
-  vq->avail = pmalloc();
-  vq->used = pmalloc();
+  vq->desc = kalloc();
+  vq->avail = kalloc();
+  vq->used = kalloc();
 
   vq->nfree = NQUEUE;
 

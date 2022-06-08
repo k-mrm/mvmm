@@ -1,7 +1,7 @@
 #include "mm.h"
 #include "aarch64.h"
 #include "lib.h"
-#include "pmalloc.h"
+#include "kalloc.h"
 #include "printf.h"
 
 u64 *pagewalk(u64 *pgt, u64 va, int alloc) {
@@ -11,7 +11,7 @@ u64 *pagewalk(u64 *pgt, u64 va, int alloc) {
     if((*pte & PTE_VALID) && (*pte & PTE_TABLE)) {
       pgt = (u64 *)PTE_PA(*pte);
     } else if(alloc) {
-      pgt = pmalloc();
+      pgt = kalloc();
       if(!pgt)
         panic("nomem");
 
@@ -48,7 +48,7 @@ void pageunmap(u64 *pgt, u64 va, u64 size) {
       panic("unmapped");
 
     u64 pa = PTE_PA(*pte);
-    pfree((void *)pa);
+    kfree((void *)pa);
     *pte = 0;
   }
 }

@@ -3,6 +3,7 @@
 #include "mm.h"
 #include "memmap.h"
 #include "spinlock.h"
+#include "kalloc.h"
 
 struct header {
   struct header *next;
@@ -15,7 +16,7 @@ struct {
   struct header *freelist;
 } pmem;
 
-void *pmalloc() {
+void *kalloc() {
   acquire(&pmem.lock);
 
   struct header *new = pmem.freelist;
@@ -32,7 +33,7 @@ void *pmalloc() {
   return (void *)new;
 }
 
-void pfree(void *p) {
+void kfree(void *p) {
   if(p == NULL)
     return;
 
@@ -46,8 +47,8 @@ void pfree(void *p) {
   release(&pmem.lock);
 }
 
-void pmalloc_init() {
+void kalloc_init() {
   spinlock_init(&pmem.lock);
   for(u64 s = (u64)vmm_end; s < PHYEND; s += PAGESIZE)
-    pfree((void *)s);
+    kfree((void *)s);
 }

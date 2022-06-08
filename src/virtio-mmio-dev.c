@@ -4,7 +4,7 @@
 #include "mm.h"
 #include "memmap.h"
 #include "vm.h"
-#include "pmalloc.h"
+#include "kalloc.h"
 #include "spinlock.h"
 
 #define R(r) ((volatile u32 *)(VIRTIO0 + (r)))
@@ -70,7 +70,7 @@ static int virtq_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_acces
       u64 iaddr = vtdev.ring[descn].ipa;
       /* check acrossing pages */
       if(((daddr+len)>>12) > (daddr>>12)) {
-        char *real = pmalloc();
+        char *real = kalloc();
         copy_from_guest(vcpu->vm->vttbr, real, vtdev.ring[descn].ipa, len);
         vtdev.ring[descn].real_addr = (u64)real;
         vtdev.ring[descn].across_page = true;
@@ -189,7 +189,7 @@ void virtio_dev_intr(struct vcpu *vcpu) {
       if(d->across_page) {
         copy_to_guest(vcpu->vm->vttbr, d->ipa, (char *)d->real_addr, d->len);
 
-        pfree((char *)d->real_addr);
+        kfree((char *)d->real_addr);
         d->across_page = false;
       }
 

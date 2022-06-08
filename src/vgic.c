@@ -5,7 +5,7 @@
 #include "param.h"
 #include "vcpu.h"
 #include "mmio.h"
-#include "pmalloc.h"
+#include "kalloc.h"
 
 #define BIT(n)  (1<<(n))
 
@@ -512,7 +512,7 @@ struct vgic *new_vgic(struct vm *vm) {
   vgic->spi_max = gic_max_spi();
   vgic->nspis = vgic->spi_max - 31;
   vgic->ctlr = 0;
-  vgic->spis = (struct vgic_irq *)pmalloc();
+  vgic->spis = (struct vgic_irq *)kalloc();
   if(!vgic->spis)
     panic("nomem");
 
