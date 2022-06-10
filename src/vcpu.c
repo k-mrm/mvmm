@@ -34,6 +34,17 @@ static struct vcpu *allocvcpu() {
   return NULL;
 }
 
+static void vcpu_features_init(struct vcpu *vcpu) {
+  u64 pfr0;
+  read_sysreg(pfr0, ID_PFR0_EL1);
+
+  vmm_log("pfr0 %p\n", pfr0);
+  /* test: Disable EL2 */
+  pfr0 &= ~(0xf << 8); 
+
+  vcpu->features.pfr0 = pfr0;
+}
+
 struct vcpu *new_vcpu(struct vm *vm, int vcpuid, u64 entry) {
   struct vcpu *vcpu = allocvcpu();
   if(!vcpu)
@@ -58,6 +69,8 @@ struct vcpu *new_vcpu(struct vm *vm, int vcpuid, u64 entry) {
     vcpu->reg.x[0] = vm->fdt;       /* fdt address */
     vcpu->reg.x[4] = entry;         /* entry point */
   }
+
+  vcpu_features_init(vcpu);
 
   gic_init_state(&vcpu->gic);
 

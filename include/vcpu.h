@@ -17,7 +17,7 @@ enum vcpu_state {
 };
 
 struct cpu_features {
-  u64 mm0;
+  u64 pfr0;
 };
 
 struct vcpu {
