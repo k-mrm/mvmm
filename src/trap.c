@@ -170,21 +170,25 @@ void vm_sync_handler() {
   u64 iss = esr & 0x1ffffff;
 
   switch(ec) {
-    case 0x1:     /* WF* */
+    case 0x1:     /* trap WF* */
       // vmm_log("wf* trapped\n");
       vcpu->reg.elr += 4;
       break;
-    case 0x16:    /* hvc */
+    case 0x16:    /* trap hvc */
       if(hvc_handler(vcpu, iss) < 0)
         panic("unknown hvc #%d", iss);
 
       break;
-    case 0x17:    /* smc */
+    case 0x17:    /* trap smc */
       if(hvc_handler(vcpu, iss) < 0)
         panic("unknown smc #%d", iss);
 
       break;
-    case 0x24:    /* data abort */
+    case 0x18:    /* trap system regsiter */
+      panic("unknown msr/mrs access %p", iss);
+
+      break;
+    case 0x24:    /* trap EL0/1 data abort */
       if(vm_dabort_handler(vcpu, iss, far) < 0) {
         dabort_iss_dump(iss);
         panic("unexcepted dabort");

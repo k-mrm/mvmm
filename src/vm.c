@@ -76,6 +76,15 @@ void create_vm(struct vmconfig *vmcfg) {
     panic("vttbr");
 
   u64 p, cpsize;
+  for(p = 0; p < 0x80000; p += PAGESIZE) {
+    char *page = kalloc();
+    if(!page)
+      panic("ram");
+
+    pagemap(vttbr, 0x40000000+p, (u64)page, PAGESIZE, S2PTE_NORMAL|S2PTE_RW);
+  }
+
+  /* map kernel image */
   for(p = 0; p < guest->size; p += PAGESIZE) {
     char *page = kalloc();
     if(!page)
