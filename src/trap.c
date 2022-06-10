@@ -55,7 +55,7 @@ void vm_irq_handler() {
 
   // vmm_log("cpu%d: vm_irq_handler %d\n", cpuid(), iar);
   
-  /* virtio */
+  /* hook virtio's interrupt */
   if(pirq == 48) {
     virtio_dev_intr(vcpu); 
   }
@@ -185,8 +185,10 @@ void vm_sync_handler() {
 
       break;
     case 0x18:    /* trap system regsiter */
-      panic("unknown msr/mrs access %p", iss);
+      if(sysreg_emulate(vcpu, iss) < 0)
+        panic("unknown msr/mrs access %p", iss);
 
+      vcpu->reg.elr += 4;
       break;
     case 0x24:    /* trap EL0/1 data abort */
       if(vm_dabort_handler(vcpu, iss, far) < 0) {

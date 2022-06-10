@@ -27,6 +27,7 @@
 #define HCR_IMO   (1<<4)
 #define HCR_TWI   (1<<13)
 #define HCR_TWE   (1<<14)
+#define HCR_TID3  (1<<18)
 #define HCR_TSC   (1<<19)
 #define HCR_TGE   (1<<27)
 #define HCR_RW    (1<<31)

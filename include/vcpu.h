@@ -16,6 +16,10 @@ enum vcpu_state {
   IDLE,
 };
 
+struct cpu_features {
+  u64 mm0;
+};
+
 struct vcpu {
   struct {
     u64 x[31];
@@ -42,6 +46,8 @@ struct vcpu {
   const char *name;
 
   enum vcpu_state state;
+
+  struct cpu_features features;
 
   struct gic_state gic;
   struct vgic_cpu *vgic;
