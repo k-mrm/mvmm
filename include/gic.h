@@ -48,6 +48,9 @@
 
 #define ICC_CTLR_EOImode(m) ((m) << 1)
 
+#define ICC_SGI1R_TargetList(v)   ((v) & 0xffff)
+#define ICC_SGI1R_INTID(v)        (((v)>>24) & 0xf)
+
 #define ICH_HCR_EN  (1<<0)
 
 #define ICH_VMCR_VENG0  (1<<0)

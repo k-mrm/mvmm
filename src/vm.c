@@ -41,12 +41,17 @@ void create_vm(struct vmconfig *vmcfg) {
   struct guest *fdt = vmcfg->fdt_img;
   struct guest *initrd = vmcfg->initrd_img;
 
+  if(!guest)
+    panic("guest img required");
+
   vmm_log("create vm `%s`\n", guest->name);
   vmm_log("n vcpu: %d\n", vmcfg->nvcpu);
   vmm_log("allocated ram: %d byte\n", vmcfg->nallocate);
   vmm_log("img_start %p img_size %p byte\n", guest->start, guest->size);
-  vmm_log("fdt_start %p fdt_size %p byte\n", fdt->start, fdt->size);
-  vmm_log("initrd_start %p initrd_size %p byte\n", initrd->start, initrd->size);
+  if(fdt)
+    vmm_log("fdt_start %p fdt_size %p byte\n", fdt->start, fdt->size);
+  if(initrd)
+    vmm_log("initrd_start %p initrd_size %p byte\n", initrd->start, initrd->size);
 
   if(guest->size > vmcfg->nallocate)
     panic("img_size > nallocate");
@@ -110,9 +115,11 @@ void create_vm(struct vmconfig *vmcfg) {
   vmm_log("entrypoint+p %p\n", vmcfg->entrypoint+p);
 
   /* map initrd image */
-  copy_to_guest(vttbr, 0x44000000, (char *)initrd->start, initrd->size);
+  if(initrd)
+    copy_to_guest(vttbr, 0x44000000, (char *)initrd->start, initrd->size);
   /* map fdt image */
-  copy_to_guest(vttbr, vm->fdt, (char *)fdt->start, fdt->size);
+  if(fdt)
+    copy_to_guest(vttbr, vm->fdt, (char *)fdt->start, fdt->size);
 
   /* map peripheral */
   pagemap(vttbr, UARTBASE, UARTBASE, PAGESIZE, S2PTE_DEVICE|S2PTE_RW);

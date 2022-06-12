@@ -42,6 +42,8 @@
 #define ISS_ID_AA64MMFR1_EL1  ISS_SYSREG(3,0,0,7,1)
 #define ISS_ID_AA64MMFR2_EL1  ISS_SYSREG(3,0,0,7,2)
 
+#define ISS_ICC_SGI1R_EL1     ISS_SYSREG(3,0,12,11,5)
+
 /*
  *  https://developer.arm.com/documentation/ddi0601/2020-12/AArch64-Registers/ESR-EL2--Exception-Syndrome-Register--EL2-
  *  #ISS encoding for an exception from MSR, MRS, or System instruction execution in AArch64 state
@@ -61,9 +63,8 @@ static void sysreg_iss_dump(u64 iss) {
           op0, op1, crn, crm, op2, rt);
 }
 
-int sysreg_emulate(struct vcpu *vcpu, u64 iss) {
+int vsysreg_emulate(struct vcpu *vcpu, u64 iss) {
   u64 tmp;
-  sysreg_iss_dump(iss);
 
   int wr = !(iss & 1);
   int rt = (iss >> 5) & 0x1f;
@@ -127,7 +128,12 @@ int sysreg_emulate(struct vcpu *vcpu, u64 iss) {
       read_sysreg(tmp, ID_AA64MMFR2_EL1);
       vcpu->reg.x[rt] = tmp;
       return 0;
+
+    case ISS_ICC_SGI1R_EL1:
+      return vgic_emulate_sgi1r(vcpu, rt, wr);
   }
 
+  vmm_warn("unhandled system register access\n");
+  sysreg_iss_dump(iss);
   return -1;
 }

@@ -157,6 +157,7 @@ static void dabort_iss_dump(u64 iss) {
   printf("DFSC : %x\n", iss & 0x3f);
 }
 
+int vsysreg_emulate(struct vcpu *vcpu, u64 iss);
 void vm_sync_handler() {
   struct vcpu *vcpu;
   read_sysreg(vcpu, tpidr_el2);
@@ -185,7 +186,7 @@ void vm_sync_handler() {
 
       break;
     case 0x18:    /* trap system regsiter */
-      if(sysreg_emulate(vcpu, iss) < 0)
+      if(vsysreg_emulate(vcpu, iss) < 0)
         panic("unknown msr/mrs access %p", iss);
 
       vcpu->reg.elr += 4;

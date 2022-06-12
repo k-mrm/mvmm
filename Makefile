@@ -21,7 +21,7 @@ endif
 OBJS = src/boot.o src/init.o src/uart.o src/lib.o src/kalloc.o src/printf.o src/vcpu.o \
 			 src/vm.o src/mm.o src/vector.o src/guest.o src/trap.o src/pcpu.o src/vgic.o \
 			 src/gic.o src/mmio.o src/vtimer.o src/pci.o src/virtio-pci.o src/vpsci.o \
-			 src/virtio-mmio-dev.o src/spinlock.o src/sysreg.o
+			 src/virtio-mmio-dev.o src/spinlock.o src/vsysreg.o
 
 QEMUOPTS = -cpu $(QCPU) -machine $(MACHINE) -smp $(NCPU) -m 256
 #QEMUOPTS += -device ioh3420,id=pcie.1,bus=pcie.0,chassis=1,slot=1

@@ -142,6 +142,23 @@ static void vgic_dump_irq_state(struct vcpu *vcpu, int intid) {
   vmm_log("%d %d %d %d\n", virq->priority, virq->target, virq->enabled, virq->igroup);
 }
 
+static int vgic_inject_sgi(struct vcpu *vcpu, u16 targetlist, u8 intid) {
+  return -1;
+}
+
+int vgic_emulate_sgi1r(struct vcpu *vcpu, int rt, int wr) {
+  /* write only register */
+  if(!wr)
+    return -1;
+
+  u64 sgi1r = vcpu->reg.x[rt];
+  u16 targetlist = ICC_SGI1R_TargetList(sgi1r); 
+  u8 intid = ICC_SGI1R_INTID(sgi1r);
+  vmm_log("vgic sgi1r %p %p", targetlist, intid);
+
+  return vgic_inject_sgi(vcpu, targetlist, intid);
+}
+
 static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_access *mmio) {
   int intid, idx;
   struct vgic_irq *irq;
