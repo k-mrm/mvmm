@@ -62,7 +62,7 @@ void vm_irq_handler() {
 
   gic_guest_eoi(pirq, 1);
 
-  if(vgic_forward_virq(vcpu, pirq, virq, 1) < 0)
+  if(vgic_inject_virq(vcpu, pirq, virq, 1) < 0)
     gic_deactive_irq(pirq);
 
   isb();

@@ -104,7 +104,7 @@ static void vgic_set_target(struct vcpu *vcpu, int vintid, u8 target) {
 
 static void vgic_dump_irq_state(struct vcpu *vcpu, int intid);
 
-int vgic_forward_virq(struct vcpu *vcpu, u32 pirq, u32 virq, int grp) {
+int vgic_inject_virq(struct vcpu *vcpu, u32 pirq, u32 virq, int grp) {
   /*
   if(!(vcpu->vm->vgic->ctlr & GICD_CTLR_ENGRP(grp))) {
     vmm_warn("vgicd disabled\n");
@@ -142,8 +142,26 @@ static void vgic_dump_irq_state(struct vcpu *vcpu, int intid) {
   vmm_log("%d %d %d %d\n", virq->priority, virq->target, virq->enabled, virq->igroup);
 }
 
-static int vgic_inject_sgi(struct vcpu *vcpu, u16 targetlist, u8 intid) {
-  return -1;
+static int vgic_inject_sgi(struct vcpu *vcpu, u64 sgir) {
+  struct vm *vm = vcpu->vm;
+
+  u16 targetlist = ICC_SGI1R_TargetList(sgir); 
+  u8 intid = ICC_SGI1R_INTID(sgir);
+
+  /* TODO: support Affinity */
+  for(int i = 0; i < 16; i++) {
+    if(targetlist & BIT(i)) {
+      if(i >= vm->nvcpu)
+        continue;
+
+      struct vcpu *target = vm->vcpus[i];
+
+      vmm_log("%d sgi to vcpu%d %d", cpuid(), i, vcpu_running(target));
+      vgic_inject_virq(target, intid, intid, 1);
+    }
+  }
+
+  return 0;
 }
 
 int vgic_emulate_sgi1r(struct vcpu *vcpu, int rt, int wr) {
@@ -151,12 +169,12 @@ int vgic_emulate_sgi1r(struct vcpu *vcpu, int rt, int wr) {
   if(!wr)
     return -1;
 
-  u64 sgi1r = vcpu->reg.x[rt];
-  u16 targetlist = ICC_SGI1R_TargetList(sgi1r); 
-  u8 intid = ICC_SGI1R_INTID(sgi1r);
+  u64 sgir = vcpu->reg.x[rt];
+  u16 targetlist = ICC_SGI1R_TargetList(sgir); 
+  u8 intid = ICC_SGI1R_INTID(sgir);
   vmm_log("vgic sgi1r %p %p", targetlist, intid);
 
-  return vgic_inject_sgi(vcpu, targetlist, intid);
+  return vgic_inject_sgi(vcpu, sgir);
 }
 
 static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_access *mmio) {

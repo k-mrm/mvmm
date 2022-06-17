@@ -13,7 +13,6 @@ enum vcpu_state {
   CREATED,
   READY,
   RUNNING,
-  IDLE,
 };
 
 struct cpu_features {
@@ -67,6 +66,10 @@ void enter_vcpu(void);
 void vcpu_init(void);
 
 void vcpu_dump(struct vcpu *vcpu);
+
+static inline bool vcpu_running(struct vcpu *vcpu) {
+  return vcpu->state == RUNNING;
+}
 
 static inline struct vcpu *cur_vcpu() {
   struct vcpu *vcpu;
