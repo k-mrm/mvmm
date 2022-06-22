@@ -37,6 +37,7 @@
 #define icc_pmr_el1       arm_sysreg(0, c4, c6, 0)
 #define icc_eoir0_el1     arm_sysreg(0, c12, c8, 1)
 #define icc_dir_el1       arm_sysreg(0, c12, c11, 1)
+#define icc_sgi1r_el1     arm_sysreg(0, c12, c11, 5)
 #define icc_iar1_el1      arm_sysreg(0, c12, c12, 0)
 #define icc_eoir1_el1     arm_sysreg(0, c12, c12, 1)
 #define icc_ctlr_el1      arm_sysreg(0, c12, c12, 4)
@@ -50,6 +51,7 @@
 
 #define ICC_SGI1R_TargetList(v)   ((v) & 0xffff)
 #define ICC_SGI1R_INTID(v)        (((v)>>24) & 0xf)
+#define ICC_SGI1R_IRM(v)          (((v)>>40) & 0x1)
 
 #define ICH_HCR_EN  (1<<0)
 
@@ -124,6 +126,15 @@ static inline u32 gicr_r32(int cpuid, u32 offset) {
 static inline void gicr_w32(int cpuid, u32 offset, u32 val) {
   *(volatile u32 *)(u64)(GICRBASEn(cpuid) + offset) = val;
 }
+
+static inline u64 gicr_r64(int cpuid, u32 offset) {
+  return *(volatile u64 *)(u64)(GICRBASEn(cpuid) + offset);
+}
+
+static inline void gicr_w64(int cpuid, u32 offset, u32 val) {
+  *(volatile u64 *)(u64)(GICRBASEn(cpuid) + offset) = val;
+}
+
 
 struct gic_state {
   u64 lr[16];

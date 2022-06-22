@@ -147,6 +147,7 @@ static int vgic_inject_sgi(struct vcpu *vcpu, u64 sgir) {
 
   u16 targetlist = ICC_SGI1R_TargetList(sgir); 
   u8 intid = ICC_SGI1R_INTID(sgir);
+  bool broadcast = ICC_SGI1R_IRM(sgir);
 
   /* TODO: support Affinity */
   for(int i = 0; i < 16; i++) {
@@ -156,10 +157,11 @@ static int vgic_inject_sgi(struct vcpu *vcpu, u64 sgir) {
 
       struct vcpu *target = vm->vcpus[i];
 
-      vmm_log("%d sgi to vcpu%d %d", cpuid(), i, vcpu_running(target));
-      vgic_inject_virq(target, intid, intid, 1);
+      // vgic_inject_virq(target, intid, intid, 1);
     }
   }
+
+  gic_set_sgi1r(sgir);
 
   return 0;
 }
@@ -172,7 +174,8 @@ int vgic_emulate_sgi1r(struct vcpu *vcpu, int rt, int wr) {
   u64 sgir = vcpu->reg.x[rt];
   u16 targetlist = ICC_SGI1R_TargetList(sgir); 
   u8 intid = ICC_SGI1R_INTID(sgir);
-  vmm_log("vgic sgi1r %p %p", targetlist, intid);
+
+  // vmm_log("vgic sgi1r %p %p", targetlist, intid);
 
   return vgic_inject_sgi(vcpu, sgir);
 }
@@ -385,7 +388,7 @@ static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmi
 
   /*
   if(!(mmio->accsize & ACC_WORD))
-    panic("%s: unimplemented %d", __func__, mmio->accsize*8);
+    panic("%s: unimplemented %d %p", __func__, mmio->accsize*8, offset);
     */
 
   switch(offset) {
@@ -399,7 +402,9 @@ static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmi
       *val = gicr_r32(vcpu->cpuid, GICR_IIDR);
       return 0;
     case GICR_TYPER:
-      *val = gicr_r32(vcpu->cpuid, GICR_TYPER);
+      if(!(mmio->accsize & ACC_DOUBLEWORD))
+        goto badwidth;
+      *val = gicr_r64(vcpu->cpuid, GICR_TYPER);
       return 0;
     case GICR_PIDR2:
       *val = gicr_r32(vcpu->cpuid, GICR_PIDR2);
@@ -448,6 +453,11 @@ static int __vgicr_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmi
 
 unimplemented:
   vmm_warn("vgicr_mmio_read: unimplemented %p\n", offset);
+  *val = 0;
+  goto end;
+
+badwidth:
+  vmm_warn("bad width: %d %p", mmio->accsize*8, offset);
   *val = 0;
   goto end;
 

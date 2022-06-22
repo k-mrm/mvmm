@@ -141,6 +141,10 @@ void gic_guest_eoi(u32 iar, int grp) {
   gic_eoi(iar, grp);
 }
 
+void gic_set_sgi1r(u64 sgi1r) {
+  write_sysreg(icc_sgi1r_el1, sgi1r);
+}
+
 void gic_irq_enable_redist(u32 cpuid, u32 irq) {
   u32 is = gicr_r32(cpuid, GICR_ISENABLER0);
   is |= 1 << (irq % 32);
