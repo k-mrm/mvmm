@@ -480,6 +480,7 @@ static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmi
     case GICR_IGROUPR0:
       /* no op */
       return 0;
+    case GICR_TYPER:
     case GICR_PIDR2:
       goto readonly;
     case GICR_ISENABLER0:
@@ -494,11 +495,9 @@ static int __vgicr_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmi
     case GICR_ICENABLER0:
     case GICR_ICPENDR0:
       goto unimplemented;
-      return 0;
     case GICR_ISACTIVER0:
     case GICR_ICACTIVER0:
       goto unimplemented;
-      return 0;
     case GICR_IPRIORITYR(0) ... GICR_IPRIORITYR(7):
       intid = (offset - GICR_IPRIORITYR(0)) / sizeof(u32) * 4;
       for(int i = 0; i < 4; i++) {

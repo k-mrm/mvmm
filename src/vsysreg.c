@@ -85,12 +85,6 @@ int vsysreg_emulate(struct vcpu *vcpu, u64 iss) {
         return -1;
       vcpu->reg.x[rt] = vcpu->features.pfr0;
       return 0;
-    case ISS_ID_AA64ISAR0_EL1:
-      if(wr)
-        return -1;
-      /* FIXME: test */
-      vcpu->reg.x[rt] = 0;
-      return 0;
 
     handle_sysreg_ro(ID_PFR1_EL1);
     handle_sysreg_ro(ID_DFR0_EL1);
@@ -112,6 +106,7 @@ int vsysreg_emulate(struct vcpu *vcpu, u64 iss) {
     handle_sysreg_ro(ID_AA64PFR1_EL1);
     handle_sysreg_ro(ID_AA64DFR0_EL1);
     handle_sysreg_ro(ID_AA64DFR1_EL1);
+    handle_sysreg_ro(ID_AA64ISAR0_EL1);
     handle_sysreg_ro(ID_AA64ISAR1_EL1);
     handle_sysreg_ro(ID_AA64MMFR0_EL1);
     handle_sysreg_ro(ID_AA64MMFR1_EL1);

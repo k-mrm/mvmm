@@ -75,6 +75,14 @@ static const char *fetch_digit(const char *fmt, int *digit) {
   return fmt;
 }
 
+static void printmacaddr(u8 *mac) {
+  for(int i = 0; i < 6; i++) {
+    printiu64(mac[i], 16, false, 2, 0);
+    if(i != 5)
+      uart_putc(':');
+  }
+}
+
 static int vprintf(const char *fmt, va_list ap) {
   char *s;
   void *p;
@@ -84,7 +92,6 @@ static int vprintf(const char *fmt, va_list ap) {
     char c = *fmt;
     if(c == '%') {
       fmt++;
-      /* %10d */
       fmt = fetch_digit(fmt, &digit);
 
       switch(c = *fmt) {
@@ -110,6 +117,9 @@ static int vprintf(const char *fmt, va_list ap) {
             s = "(null)";
 
           uart_puts(s);
+          break;
+        case 'm': /* print mac address */
+          printmacaddr(va_arg(ap, u8 *));
           break;
         case '%':
           uart_putc('%');
