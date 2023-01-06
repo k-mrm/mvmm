@@ -15,7 +15,7 @@ QEMU = $(QEMUPREFIX)qemu-system-aarch64
 GIC_VERSION = 3
 MACHINE = virt,gic-version=$(GIC_VERSION),virtualization=on
 ifndef NCPU
-NCPU = 1
+NCPU = 2
 endif
 
 OBJS = src/boot.o src/init.o src/uart.o src/lib.o src/kalloc.o src/printf.o src/vcpu.o \
@@ -23,7 +23,7 @@ OBJS = src/boot.o src/init.o src/uart.o src/lib.o src/kalloc.o src/printf.o src/
 			 src/gic.o src/mmio.o src/vtimer.o src/pci.o src/virtio-pci.o src/vpsci.o \
 			 src/virtio-mmio-dev.o src/spinlock.o src/vsysreg.o
 
-QEMUOPTS = -cpu $(QCPU) -machine $(MACHINE) -smp $(NCPU) -m 256
+QEMUOPTS = -cpu $(QCPU) -machine $(MACHINE) -smp $(NCPU) -m 512
 #QEMUOPTS += -device ioh3420,id=pcie.1,bus=pcie.0,chassis=1,slot=1
 #QEMUOPTS += -device pcie-root-port,port=0x10,chassis=1,id=pcie.1,bus=pcie.0,multifunction=on,addr=0x2
 #QEMUOPTS += -device pcie-root-port,port=0x11,chassis=2,id=pcie.2,bus=pcie.0,addr=0x2.0x1
@@ -66,7 +66,7 @@ qemu-gdb: mvmm
 	$(QEMU) $(QEMUOPTS) -initrd guest/linux/rootfs.img -append "console=ttyAMA0" -S -gdb tcp::1234 
 
 linux: guest/linux/Image
-	$(QEMU) -M virt,gic-version=3 -cpu cortex-a72 -smp $(NCPU) -kernel guest/linux/Image -initrd guest/linux/rootfs.img -nographic -append "console=ttyAMA0" -m 128
+	$(QEMU) -M virt,gic-version=3 -cpu cortex-a72 -smp $(NCPU) -kernel guest/linux/Image -initrd guest/linux/rootfs.img -nographic -append "console=ttyAMA0" -m 256
 
 linux-gdb: guest/linux/Image
 	$(QEMU) -M virt,gic-version=3 -cpu cortex-a72 -smp $(NCPU) -kernel guest/linux/Image -initrd guest/linux/rootfs.img -nographic -append "console=ttyAMA0" -m 128 -S -gdb tcp::1234
@@ -76,7 +76,7 @@ dts:
 	dtc -I dtb -O dts -o virt.dts virt.dtb
 
 dtb:
-	$(QEMU) -M virt,gic-version=3,dumpdtb=virt.dtb -smp $(NCPU) -cpu cortex-a72 -kernel guest/linux/Image -initrd guest/linux/rootfs.img -nographic -append "console=ttyAMA0" -m 128
+	$(QEMU) -M virt,gic-version=3,dumpdtb=virt.dtb -smp $(NCPU) -cpu cortex-a72 -kernel guest/linux/Image -initrd guest/linux/rootfs.img -nographic -append "console=ttyAMA0 nokaslr" -m 256
 
 clean:
 	make -C guest clean

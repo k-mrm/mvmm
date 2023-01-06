@@ -105,12 +105,6 @@ static void vgic_set_target(struct vcpu *vcpu, int vintid, u8 target) {
 static void vgic_dump_irq_state(struct vcpu *vcpu, int intid);
 
 int vgic_inject_virq(struct vcpu *vcpu, u32 pirq, u32 virq, int grp) {
-  /*
-  if(!(vcpu->vm->vgic->ctlr & GICD_CTLR_ENGRP(grp))) {
-    vmm_warn("vgicd disabled\n");
-    return -1;
-  }*/
-
   struct vgic_cpu *vgic = vcpu->vgic;
 
   u64 lr = gic_make_lr(pirq, virq, grp);
@@ -193,14 +187,40 @@ static int vgicd_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct mmio_
   acquire(&vgic->lock);
 
   switch(offset) {
-    case GICD_CTLR:
-      *val = vgic->ctlr;
+    case GICD_CTLR: {
+      u32 v = GICD_CTLR_SS_ARE | GICD_CTLR_DS;
+
+      if(vgic->enabled)
+        v |= GICD_CTLR_SS_ENGRP1;
+
+      *val = v;
       goto end;
-    case GICD_TYPER:
-      *val = gicd_r(GICD_TYPER);
+    }
+
+    case GICD_TYPER: {
+      /* ITLinesNumber */
+      u32 v = ((vgic->nspis + 32) >> 5) - 1;
+
+      /* CPU Number */
+      v |= (8 - 1) << GICD_TYPER_CPUNum_SHIFT;
+
+      /* MBIS LPIS disabled */
+
+      /* IDbits */
+      v |= (10 - 1) << GICD_TYPER_IDbits_SHIFT;
+
+      /* A3V disabled */
+
+      *val = v;
       goto end;
+    }
+
     case GICD_IIDR:
       *val = gicd_r(GICD_IIDR);
+      goto end;
+    case GICD_TYPER2:
+      /* linux's gicv3 driver accessed GICD_TYPER2 (offset 0xc) */
+      *val = 0;
       goto end;
     case GICD_IGROUPR(0) ... GICD_IGROUPR(31)+3: {
       u32 igrp = 0;
@@ -299,8 +319,13 @@ static int vgicd_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct mmio_
 
   switch(offset) {
     case GICD_CTLR:
-      vgic->ctlr = val;
+      if(val & GICD_CTLR_SS_ENGRP1)
+        vgic->enabled = true;
+      else
+        vgic->enabled = false;
+
       goto end;
+
     case GICD_IIDR:
     case GICD_TYPER:
       goto readonly;
@@ -555,7 +580,7 @@ struct vgic *new_vgic(struct vm *vm) {
   struct vgic *vgic = allocvgic();
   vgic->spi_max = gic_max_spi();
   vgic->nspis = vgic->spi_max - 31;
-  vgic->ctlr = 0;
+  vgic->enabled = false;
   vgic->spis = (struct vgic_irq *)kalloc();
   if(!vgic->spis)
     panic("nomem");

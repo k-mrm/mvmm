@@ -18,8 +18,8 @@
 #define intr_enable()   asm volatile("msr daifclr, #2" ::: "memory")
 #define intr_disable()  asm volatile("msr daifset, #2" ::: "memory")
 
-#define isb()   asm volatile("isb");
-#define dsb()   asm volatile("dsb sy");
+#define isb()     asm volatile("isb");
+#define dsb(ty)   asm volatile("dsb " #ty);
 
 #define HCR_VM    (1<<0)
 #define HCR_SWIO  (1<<1)
@@ -48,9 +48,9 @@ static inline u64 vttbr_ipa2pa(u64 ipa) {
 }
 
 static inline void tlb_flush() {
-  asm volatile("dsb ishst");
+  dsb(ishst);
   asm volatile("tlbi vmalls12e1");
-  asm volatile("dsb ish");
+  dsb(ish);
   isb();
 }
 

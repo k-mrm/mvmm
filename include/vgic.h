@@ -20,7 +20,7 @@ struct vgic {
   int used;
   int spi_max;
   int nspis;
-  u32 ctlr;     /* GICD_CTLR */
+  bool enabled;
   struct vgic_irq *spis;
 
   spinlock_t lock;

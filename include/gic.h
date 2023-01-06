@@ -78,6 +78,7 @@
 #define GICD_CTLR_ENGRP(grp)    (1<<(grp))
 #define GICD_TYPER          (0x4)
 #define GICD_IIDR           (0x8)
+#define GICD_TYPER2         (0xc)
 #define GICD_IGROUPR(n)     (0x080 + (u64)(n) * 4)
 #define GICD_ISENABLER(n)   (0x100 + (u64)(n) * 4)
 #define GICD_ICENABLER(n)   (0x180 + (u64)(n) * 4)
@@ -90,6 +91,26 @@
 #define GICD_ICFGR(n)       (0xc00 + (u64)(n) * 4)
 #define GICD_IROUTER(n)     (0x6000 + (u64)(n) * 8)
 #define GICD_PIDR2          (0xffe8)
+
+#define GICD_TYPER_CPUNum_SHIFT   5
+#define GICD_TYPER_IDbits_SHIFT   19
+
+#define GICD_IIDR_Revision_SHIFT    12
+#define GICD_IIDR_ProductID_SHIFT   24
+
+#define GICD_PIDR2_ArchRev(pidr2)   (((pidr2)>>4) & 0xf)
+#define GICD_PIDR2_ArchRev_SHIFT    4
+
+/* Non-secure access in double security state */
+#define GICD_CTLR_NS_ENGRP1     (1 << 0)
+#define GICD_CTLR_NS_ENGRP1A    (1 << 1)
+#define GICD_CTLR_NS_ARE_NS     (1 << 4)
+
+/* only single security state */
+#define GICD_CTLR_SS_ENGRP0     (1 << 0)
+#define GICD_CTLR_SS_ENGRP1     (1 << 1)
+#define GICD_CTLR_SS_ARE        (1 << 4)
+#define GICD_CTLR_DS            (1 << 6)
 
 #define GICRBASEn(n)        (GICRBASE+(n)*0x20000)
 

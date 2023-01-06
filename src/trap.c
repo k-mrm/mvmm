@@ -60,6 +60,9 @@ void vm_irq_handler() {
     virtio_dev_intr(vcpu); 
   }
 
+  if(pirq == 27)
+    vmm_warn("cpu%d: timer intr ", cpuid());
+
   gic_guest_eoi(pirq, 1);
 
   if(vgic_inject_virq(vcpu, pirq, virq, 1) < 0)
